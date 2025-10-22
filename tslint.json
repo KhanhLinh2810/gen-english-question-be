@@ -1,0 +1,16 @@
+{
+	"defaultSeverity": "error",
+	"rules": {
+		"no-console": [true, "debug", "info", "time", "timeEnd", "trace"],
+		"quotemark": false,
+		"object-literal-sort-keys": false,
+		"ordered-imports": true,
+		"variable-name": false,
+		"no-string-literal": false,
+		"no-unused-expression": true,
+		"trailing-comma": false,
+		"arrow-parens": false,
+		"class-name": false
+	},
+	"rulesDirectory": []
+}

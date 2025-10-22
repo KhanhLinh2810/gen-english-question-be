@@ -1,0 +1,76 @@
+stages:
+  - review
+  - build
+  - deploy
+
+review:
+    stage: review
+    before_script:
+        - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+        - eval $(ssh-agent -s)
+    script:
+        - bash /etc/gitlab-runner/select-sever-cicd.sh 'bash ai-review.sh --merge-request'
+    rules:
+      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "staging"'
+        when: always
+      - when: never
+        
+build-develop:
+    stage: build
+    before_script:
+        - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+        - eval $(ssh-agent -s)
+    script:
+        - bash /etc/gitlab-runner/select-sever-cicd.sh 'bash build.sh --docker--network=insurance-platform-dev --docker--file=deploy/Dockerfile.dev --time-period=120 --host-port=3500 --container-port=3005 --download-file=.env,'
+    only:
+        - develop
+
+deploy-develop:
+    stage: deploy
+    before_script:
+        - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+        - eval $(ssh-agent -s)
+    script:
+        - bash /etc/gitlab-runner/select-sever-cicd.sh 'bash deploy.sh --docker--network=insurance-platform-dev --time-period=120 --host-port=3500 --container-port=3005'
+    only:
+        - develop
+
+build-staging:
+    stage: build
+    before_script:
+        - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+        - eval $(ssh-agent -s)
+    script:
+        - bash /etc/gitlab-runner/select-sever-cicd.sh 'bash build.sh --docker--file=deploy/Dockerfile.dev --time-period=120 --host-port=5500 --container-port=3005 --download-file=.env,'
+    only:
+        - staging
+
+deploy-staging:
+    stage: deploy
+    before_script:
+        - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+        - eval $(ssh-agent -s)
+    script:
+        - bash /etc/gitlab-runner/select-sever-cicd.sh 'bash deploy.sh --time-period=120 --host-port=5500 --container-port=3005'
+    only:
+        - staging
+
+build-prod:
+    stage: build
+    before_script:
+        - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+        - eval $(ssh-agent -s)
+    script:
+        - bash /etc/gitlab-runner/select-sever-cicd.sh 'bash build.sh --docker--file=deploy/Dockerfile.prod --deploy-ssh-host=13.231.165.126 --deploy-ssh-port=22 --time-period=120 --host-port=5500 --container-port=3005 --download-file=.env,'
+    only:
+        - master
+
+deploy-prod:
+    stage: deploy
+    before_script:
+        - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+        - eval $(ssh-agent -s)
+    script:
+        - bash /etc/gitlab-runner/select-sever-cicd.sh 'bash deploy.sh --deploy-ssh-host=13.231.165.126 --deploy-ssh-port=22 --time-period=120 --host-port=5500 --container-port=3005'
+    only:
+        - master

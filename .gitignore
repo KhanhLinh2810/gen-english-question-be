@@ -1,0 +1,7 @@
+node_modules
+dist
+.env
+.http
+uploads
+.idea
+logs/
