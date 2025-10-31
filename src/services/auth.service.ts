@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import env from '../../env';
-import { NOROUTE_ERROR } from '../constants/constants';
+import { NOROUTE_ERROR, NOT_ACCEPTABLE } from '../constants/constants';
 import { Users } from '../models';
 import { AppError } from '../utility/appError.util';
 import { EncUtil } from '../utility/encryption';
@@ -29,6 +29,26 @@ export class AuthService {
       throw new AppError(NOROUTE_ERROR, 'username_or_password_mismatch');
     }
     return user;
+  }
+
+    async register(username: string, email: string, password: string): Promise<Users> {
+    const existingUser = await Users.findOne({
+      where: { username },
+    });
+
+    if (existingUser) {
+      throw new AppError(NOT_ACCEPTABLE, 'username_already_exists');
+    }
+
+    const hashedPassword = await EncUtil.createHash(password);
+
+    const newUser = await Users.create({
+      username,
+      email,
+      password: hashedPassword,
+    });
+
+    return newUser;
   }
 
   getToken(

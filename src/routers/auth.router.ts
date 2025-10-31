@@ -5,12 +5,17 @@ import { loginUserSchema, registerUserSchema } from '../validators';
 import { authController } from '../controllers';
 const router = Router();
 
-router.post('/auth/login', validateBody(loginUserSchema), authController.login);
-// router.post('/auth/logout', authController.logout);
-// router.post(
-//   '/auth/register',
-//   validateBody(registerUserSchema),
-//   authController.register,
-// );
+console.log('authController:', authController);
+
+// router.post('/auth/login', validateBody(loginUserSchema), authController.login);
+router.post('/auth/login', validateBody(loginUserSchema), authController.login.bind(authController));
+
+router.post('/auth/logout', authController.logout.bind(authController));
+
+router.post(
+  '/auth/register',
+  validateBody(registerUserSchema),
+  authController.register.bind(authController),
+);
 
 export default router;

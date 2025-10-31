@@ -1,6 +1,6 @@
 import { Dialect, Sequelize } from 'sequelize';
 import env from '../../env';
-import { Counter, File, Users, UserSearchModel } from '../models';
+import { Counter, File, Users, UserSearchModel, Questions, Options } from '../models';
 
 const dbConfig = env.database;
 
@@ -72,6 +72,11 @@ Users.initClass(sequelize);
 UserSearchModel.initClass(sequelize);
 Counter.initClass(sequelize);
 File.initClass(sequelize);
+Questions.initClass(sequelize);
+Options.initClass(sequelize);
+
+Questions.associate?.();
+Options.associate?.();
 
 // Relationships
 

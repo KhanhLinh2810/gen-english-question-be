@@ -52,20 +52,16 @@ class AuthController {
     }
   }
 
-  async register(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { username, email, password } = req.body;
-      await this.userService.validateUsernameAndEmail(username, email);
-      await this.userService.create({
-        username,
-        email,
-        password: await EncUtil.createHash(password),
-      });
-      return res.status(RESPONSE_SUCCESS).json(resOK());
-    } catch (e) {
-      next(e);
-    }
+async register(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { username, email, password } = req.body;
+    const newUser = await this.authService.register(username, email, password);
+    return res.status(RESPONSE_SUCCESS).json(resOK({ id: newUser.id }));
+  } catch (e) {
+    next(e);
   }
+}
+
 }
 
 export const authController = new AuthController();
