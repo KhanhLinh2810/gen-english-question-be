@@ -9,7 +9,7 @@ async function destroy(scope: string, userId: number) {
 export const findOneLatest = async (scope: string, userId: number) => {
 	return await UserSearchModel.findOne({
 		where: { scope: scope as string, userId: userId },
-		order: [['createdAt', 'DESC']],
+		order: [['created_at', 'DESC']],
 	});
 };
 

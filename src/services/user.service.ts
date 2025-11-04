@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import {
   CreationAttributes,
   Op,
@@ -9,7 +10,6 @@ import { IFilterUser, IPagination } from '../interfaces';
 import { Users } from '../models';
 import { AppError } from '../utility/appError.util';
 import { escapeSearchKeyword } from '../utility/utils';
-import _ from 'lodash';
 
 export class UserService {
   private static instance: UserService;
@@ -59,8 +59,8 @@ export class UserService {
   }
 
   // destroy
-  async destroy(condition: WhereAttributeHash) {
-    return await Users.destroy({ where: condition });
+  async destroy(id: number) {
+    return await Users.destroy({ where: { id: id } });
   }
 
   // validate
@@ -69,19 +69,20 @@ export class UserService {
     email: string,
     excludeUserId?: number,
   ) {
+    console.log(excludeUserId);
     const query = excludeUserId
       ? {
           [Op.or]: [{ username }, { email }],
+          id: { [Op.ne]: excludeUserId },
         }
       : {
           [Op.or]: [{ username }, { email }],
-          id: { [Op.ne]: excludeUserId },
         };
-    const emailExists = await Users.findOne({
+    const exist_user = await Users.findOne({
       where: query,
     });
-    if (emailExists) {
-      throw new AppError(BAD_REQUEST, 'email_already_exists');
+    if (exist_user) {
+      throw new AppError(BAD_REQUEST, 'username_or_email_already_exists');
     }
   }
 

@@ -15,8 +15,8 @@ export class UserSearchModel extends Model<
   declare searchTerm: any;
   declare scope: string;
   declare userId: number;
-  declare createdAt: CreationOptional<Date>;
-  declare updatedAt: CreationOptional<Date>;
+  declare created_at: CreationOptional<Date>;
+  declare updated_at: CreationOptional<Date>;
 
   static initClass = (sequelize: Sequelize) => {
     UserSearchModel.init(
@@ -38,8 +38,8 @@ export class UserSearchModel extends Model<
           type: DataTypes.INTEGER,
           allowNull: false,
         },
-        createdAt: DataTypes.DATE,
-        updatedAt: DataTypes.DATE,
+        created_at: DataTypes.DATE,
+        updated_at: DataTypes.DATE,
       },
       {
         sequelize,

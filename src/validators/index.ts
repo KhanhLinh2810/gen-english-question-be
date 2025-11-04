@@ -65,3 +65,4 @@ addFormats(ajv);
 export { ajv };
 export * from './auth.validator';
 export * from './user.validator';
+export * from './question.validator';

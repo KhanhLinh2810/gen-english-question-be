@@ -7,6 +7,7 @@ const SESSION_ERROR = 403; //no-session
 const NOROUTE_ERROR = 404; //no-route
 const NOT_ACCEPTABLE = 406; //not acceptable
 const BAD_REQUEST = 400; //bad request
+const NOT_FOUND = 501; //not found
 
 const PAGE = '1';
 const LIMIT = '10';
@@ -51,6 +52,7 @@ export {
   NOROUTE_ERROR,
   NOT_ACCEPTABLE,
   BAD_REQUEST,
+  NOT_FOUND,
   PAGE,
   LIMIT,
   REGEX_NUMBER,

@@ -8,9 +8,9 @@ import { PERMISSION_ERROR } from '../constants/constants';
 import { UserDTO } from '../dtos';
 import { CustomRequest } from '../interfaces';
 import { Users } from '../models';
+import { TokenService } from '../modules';
 import { UserService } from '../services';
 import { AppError } from '../utility/appError.util';
-import { TokenService } from '../modules';
 
 export const verifyToken = async (
   req: Request,

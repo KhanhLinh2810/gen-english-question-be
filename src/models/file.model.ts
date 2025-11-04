@@ -20,9 +20,9 @@ export class File extends Model<
   declare fileSize?: number | null;
   declare mimeType?: string | null;
   declare displayOrder: CreationOptional<number>;
-  declare createdAt: CreationOptional<Date>;
-  declare updatedAt: CreationOptional<Date>;
-  declare deletedAt: CreationOptional<Date | null>;
+  declare created_at: CreationOptional<Date>;
+  declare updated_at: CreationOptional<Date>;
+  declare deleted_at: CreationOptional<Date | null>;
 
   static initClass = (sequelize: Sequelize) => {
     File.init(
@@ -73,17 +73,17 @@ export class File extends Model<
           defaultValue: 0,
           field: 'display_order',
         },
-        createdAt: {
+        created_at: {
           type: DataTypes.DATE,
           allowNull: false,
           field: 'created_at',
         },
-        updatedAt: {
+        updated_at: {
           type: DataTypes.DATE,
           allowNull: false,
           field: 'updated_at',
         },
-        deletedAt: {
+        deleted_at: {
           type: DataTypes.DATE,
           allowNull: true,
           field: 'deleted_at',

@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
 import env from '../../env';
-import { NOROUTE_ERROR } from '../constants/constants';
+import { NOROUTE_ERROR, NOT_ACCEPTABLE } from '../constants/constants';
 import { Users } from '../models';
 import { AppError } from '../utility/appError.util';
 import { EncUtil } from '../utility/encryption';
+import { UserService } from './user.service';
 
 export class AuthService {
   private static instance: AuthService;
@@ -29,6 +30,21 @@ export class AuthService {
       throw new AppError(NOROUTE_ERROR, 'username_or_password_mismatch');
     }
     return user;
+  }
+
+  async register(
+    username: string,
+    email: string,
+    password: string,
+  ): Promise<Users> {
+    const userService = UserService.getInstance();
+    await userService.validateUsernameAndEmail(username, email);
+
+    return await Users.create({
+      username,
+      email,
+      password: await EncUtil.createHash(password),
+    });
   }
 
   getToken(

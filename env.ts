@@ -34,10 +34,10 @@ export default {
   },
   database: {
     host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT) || 5432,
-    username: process.env.DB_USERNAME || 'mysql',
+    port: Number(process.env.DB_PORT) || 3306,
+    username: process.env.DB_USERNAME || 'root',
     password: process.env.DB_PASSWORD || '123456',
-    name: process.env.DB_NAME || 'mysql',
+    name: process.env.DB_NAME || 'question_gen',
     dialect: process.env.DB_DIALECT || 'mysql',
     max: Number(process.env.DB_POOL_MAX) || 20,
     min: Number(process.env.DB_POOL_MIN) || 5,
@@ -48,6 +48,7 @@ export default {
     retryMax: Number(process.env.DB_RETRY_MAX) || 5,
     retryDelay: Number(process.env.DB_RETRY_DELAY) || 5000,
   },
+
   mail: {
     host: process.env.MAIL_HOST || 'sandbox.smtp.mailtrap.io',
     port: parseInt(process.env.MAIL_PORT!) || 2525,

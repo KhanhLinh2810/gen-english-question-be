@@ -1,8 +1,8 @@
-import { Server as SocketIOServer } from 'socket.io';
-import { Server as HTTPServer } from 'http';
-import { Logger } from '../../utility/logger.util';
-import env from '../../../env';
 import { CorsOptions } from 'cors';
+import { Server as HTTPServer } from 'http';
+import { Server as SocketIOServer } from 'socket.io';
+import env from '../../../env';
+import { Logger } from '../../utility/logger.util';
 
 export interface ISocketEvent {
   type: string;

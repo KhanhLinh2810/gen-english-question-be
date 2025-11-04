@@ -4,7 +4,7 @@ import { IUpdateUser } from '../interfaces';
 export const updateUserSchema: JSONSchemaType<IUpdateUser> = {
   type: 'object',
   properties: {
-    username: { type: 'string', maxLength: 255 },
+    username: { type: 'string', minLength: 1, maxLength: 255 },
     email: {
       type: 'string',
       maxLength: 255,

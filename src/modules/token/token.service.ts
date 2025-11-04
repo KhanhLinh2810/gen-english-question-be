@@ -1,5 +1,5 @@
-import env from '../../../env';
 import _ from 'lodash';
+import env from '../../../env';
 import { CacheService } from '../cache';
 
 export class TokenService {

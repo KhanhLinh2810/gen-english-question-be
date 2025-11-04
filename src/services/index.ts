@@ -5,6 +5,7 @@ export { AuthService } from './auth.service';
 export { FileService } from './file.service';
 export { CounterService } from './counter.service';
 export { EmailService } from './email.service';
+export { QuestionService } from './question.service';
 
 export const addFilterDate = (
   searchQuery: any,
