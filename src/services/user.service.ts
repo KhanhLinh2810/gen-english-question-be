@@ -6,9 +6,15 @@ import {
   WhereAttributeHash,
 } from 'sequelize';
 import { BAD_REQUEST } from '../constants/constants';
-import { IFilterUser, IPagination } from '../interfaces';
+import {
+  IFilterUser,
+  IPagination,
+  IUpdatePasswordUser,
+  IUpdateUser,
+} from '../interfaces';
 import { Users } from '../models';
 import { AppError } from '../utility/appError.util';
+import { EncUtil } from '../utility/encryption';
 import { escapeSearchKeyword } from '../utility/utils';
 
 export class UserService {
@@ -55,6 +61,44 @@ export class UserService {
     if (!user) {
       throw new AppError(BAD_REQUEST, 'user_not_found');
     }
+    return user;
+  }
+
+  // update
+  async updateUsernameAndEmail(
+    data: IUpdateUser,
+    userId: number,
+    transaction?: Transaction,
+  ) {
+    await this.validateUsernameAndEmail(data.username, data.email, userId);
+    const user = await this.findOrFail(userId);
+    user.set(data);
+    await user.save({ transaction });
+    return user;
+  }
+
+  async updatePassword(
+    data: IUpdatePasswordUser,
+    userId: number,
+    transaction?: Transaction,
+  ) {
+    const user = await Users.findByPk(userId, {
+      attributes: ['id', 'password'],
+    });
+    if (!user) {
+      throw new AppError(BAD_REQUEST, 'user_not_found');
+    }
+
+    const isMatch = await EncUtil.comparePassword(
+      data.old_password,
+      user.password,
+    );
+    if (!isMatch) {
+      throw new AppError(BAD_REQUEST, 'password_mismatch');
+    }
+
+    user.set({ password: await EncUtil.createHash(data.new_password) });
+    await user.save({ transaction });
     return user;
   }
 

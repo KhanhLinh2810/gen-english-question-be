@@ -22,3 +22,8 @@ export interface IUpdateUser {
   username: string;
   email: string;
 }
+
+export interface IUpdatePasswordUser {
+  old_password: string;
+  new_password: string;
+}

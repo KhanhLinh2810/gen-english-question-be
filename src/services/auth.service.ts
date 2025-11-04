@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import env from '../../env';
-import { NOROUTE_ERROR, NOT_ACCEPTABLE } from '../constants/constants';
+import { BAD_REQUEST } from '../constants/constants';
 import { Users } from '../models';
 import { AppError } from '../utility/appError.util';
 import { EncUtil } from '../utility/encryption';
@@ -22,12 +22,12 @@ export class AuthService {
       attributes: ['id', 'password', 'username'],
     });
     if (!user) {
-      throw new AppError(NOROUTE_ERROR, 'username_or_password_mismatch');
+      throw new AppError(BAD_REQUEST, 'username_or_password_mismatch');
     }
 
     const isMatch = await EncUtil.comparePassword(password, user.password);
     if (!isMatch) {
-      throw new AppError(NOROUTE_ERROR, 'username_or_password_mismatch');
+      throw new AppError(BAD_REQUEST, 'username_or_password_mismatch');
     }
     return user;
   }

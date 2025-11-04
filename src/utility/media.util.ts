@@ -51,13 +51,7 @@ export const uploadImage = multer({
     if (errCode) {
       return cb(new AppError(BAD_REQUEST, errCode));
     }
-    const allowedTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/jpg',
-      'image/heic',
-      'image/heif',
-    ];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
     if (!allowedTypes.includes(file.mimetype)) {
       return cb(new AppError(BAD_REQUEST, 'files.only_image_allowed'));
     }
@@ -119,15 +113,15 @@ export const uploadImageMemory = multer({
 });
 
 export const uploadPDFMemory = multer({
-	storage: multer.memoryStorage(),
-	limits: { fileSize: Number(env.file.limit_image_size) },
-	fileFilter: (req, file, cb) => {
-		const allowedTypes = ['application/pdf'];
-		if (!allowedTypes.includes(file.mimetype)) {
-			return cb(new AppError(BAD_REQUEST, 'files.only_pdf_allowed'));
-		}
-		cb(null, true);
-	},
+  storage: multer.memoryStorage(),
+  limits: { fileSize: Number(env.file.limit_image_size) },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['application/pdf'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      return cb(new AppError(BAD_REQUEST, 'files.only_pdf_allowed'));
+    }
+    cb(null, true);
+  },
 });
 
 export const setFilePath = (file: Express.Multer.File): void => {

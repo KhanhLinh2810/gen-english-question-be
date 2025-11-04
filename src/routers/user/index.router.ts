@@ -1,11 +1,32 @@
 import { Router } from 'express';
 import { userController } from '../../controllers';
+import { validateBody } from '../../middleware/validation.middleware';
+import { uploadImage } from '../../utility/media.util';
+import { updatePasswordUserSchema, updateUserSchema } from '../../validators';
 import questionRouter from './question.router';
 
 const router = Router();
 
 router.use('/questions', questionRouter);
 
-router.get('/me', userController.getMe);
+router.get('/me', userController.getMe.bind(userController));
+router.get('/list', userController.index.bind(userController));
+router.get('/:id', userController.detail.bind(userController));
+router.put(
+  '/password',
+  validateBody(updatePasswordUserSchema),
+  userController.updatePassword.bind(userController),
+);
+router.put(
+  '/avatar',
+  uploadImage.single('avatar'),
+  userController.updateAvatar.bind(userController),
+);
+router.put(
+  '/',
+  validateBody(updateUserSchema),
+  userController.update.bind(userController),
+);
+router.delete('/', userController.destroy.bind(userController));
 
 export default router;

@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv';
-import { IUpdateUser } from '../interfaces';
+import { IUpdatePasswordUser, IUpdateUser } from '../interfaces';
 
 export const updateUserSchema: JSONSchemaType<IUpdateUser> = {
   type: 'object',
@@ -12,5 +12,15 @@ export const updateUserSchema: JSONSchemaType<IUpdateUser> = {
     },
   },
   required: ['username', 'email'],
+  additionalProperties: false,
+};
+
+export const updatePasswordUserSchema: JSONSchemaType<IUpdatePasswordUser> = {
+  type: 'object',
+  properties: {
+    old_password: { type: 'string', minLength: 1, maxLength: 255 },
+    new_password: { type: 'string', minLength: 1, maxLength: 255 },
+  },
+  required: ['old_password', 'new_password'],
   additionalProperties: false,
 };
