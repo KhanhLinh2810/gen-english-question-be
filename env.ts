@@ -35,10 +35,10 @@ export default {
   database: {
     host: process.env.DB_HOST || 'localhost',
     port: Number(process.env.DB_PORT) || 5432,
-    username: process.env.DB_USERNAME || 'postgres',
+    username: process.env.DB_USERNAME || 'mysql',
     password: process.env.DB_PASSWORD || '123456',
-    name: process.env.DB_NAME || 'postgres',
-    dialect: process.env.DB_DIALECT || 'postgres',
+    name: process.env.DB_NAME || 'mysql',
+    dialect: process.env.DB_DIALECT || 'mysql',
     max: Number(process.env.DB_POOL_MAX) || 20,
     min: Number(process.env.DB_POOL_MIN) || 5,
     acquire: Number(process.env.DB_POOL_ACQUIRE) || 60000,
