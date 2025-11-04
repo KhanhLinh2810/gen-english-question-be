@@ -36,7 +36,7 @@ export default {
     host: process.env.DB_HOST || 'localhost',
     port: Number(process.env.DB_PORT) || 3306,
     username: process.env.DB_USERNAME || 'root',
-    password: process.env.DB_PASSWORD || 'Thuydung@242042',
+    password: process.env.DB_PASSWORD || '123456',
     name: process.env.DB_NAME || 'question_gen',
     dialect: process.env.DB_DIALECT || 'mysql',
     max: Number(process.env.DB_POOL_MAX) || 20,

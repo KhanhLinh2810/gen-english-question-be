@@ -34,6 +34,7 @@ const config = {
 		dialect: process.env.PROD_DB_DIALECT,
 	},
 };
+console.log(config)
 
 module.exports = {
 	...config,
