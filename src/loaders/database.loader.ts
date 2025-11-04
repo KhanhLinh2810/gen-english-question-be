@@ -1,6 +1,6 @@
 import { Dialect, Sequelize } from 'sequelize';
 import env from '../../env';
-import { Counter, File, Users, UserSearchModel, Questions, Choices } from '../models';
+import { Choices, Counter, File, Questions, Users, UserSearchModel } from '../models';
 
 const dbConfig = env.database;
 

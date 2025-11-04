@@ -19,7 +19,7 @@ export class Users extends Model<
   declare password: string;
   declare created_at: Date;
   declare updated_at: Date;
-  declare deleted_at: CreationOptional<Date>;
+  // declare deleted_at: CreationOptional<Date>;
 
   // Associations
 
@@ -46,17 +46,17 @@ export class Users extends Model<
         password: DataTypes.TEXT,
         created_at: DataTypes.DATE,
         updated_at: DataTypes.DATE,
-        deleted_at: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: null,
-        },
+        // deleted_at: {
+        //   type: DataTypes.DATE,
+        //   allowNull: true,
+        //   defaultValue: null,
+        // },
       },
       {
         sequelize,
         tableName: 'users',
         timestamps: true,
-        paranoid: true,
+        // paranoid: true,
         underscored: true,
         // created_at: 'created_at',
         // updated_at: 'updated_at',

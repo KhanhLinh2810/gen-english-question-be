@@ -2,7 +2,7 @@ import { Users } from '../../models/users.model';
 
 export class UserDTO {
   public id: number;
-  public username: string | null;
+  public username: string;
   public email: string;
   public avatar_url?: string | null;
 

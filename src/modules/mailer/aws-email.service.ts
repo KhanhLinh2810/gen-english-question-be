@@ -1,10 +1,10 @@
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { SendEmailCommand, SESClient } from '@aws-sdk/client-ses';
 import imap, { ImapSimple } from 'imap-simple';
+import nodemailer, { Transporter } from 'nodemailer';
 import env from '../../../env';
 import { Logger } from '../../utility/logger.util';
 import { ISendMailOptions } from './interfaces/send-mail-options.interface';
-import nodemailer, { Transporter } from 'nodemailer';
 
 export class AWSEmailService {
   private static instance: AWSEmailService;

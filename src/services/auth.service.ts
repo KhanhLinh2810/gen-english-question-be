@@ -4,6 +4,7 @@ import { NOROUTE_ERROR, NOT_ACCEPTABLE } from '../constants/constants';
 import { Users } from '../models';
 import { AppError } from '../utility/appError.util';
 import { EncUtil } from '../utility/encryption';
+import { UserService } from './user.service';
 
 export class AuthService {
   private static instance: AuthService;
@@ -31,24 +32,19 @@ export class AuthService {
     return user;
   }
 
-    async register(username: string, email: string, password: string): Promise<Users> {
-    const existingUser = await Users.findOne({
-      where: { username },
-    });
+  async register(
+    username: string,
+    email: string,
+    password: string,
+  ): Promise<Users> {
+    const userService = UserService.getInstance();
+    await userService.validateUsernameAndEmail(username, email);
 
-    if (existingUser) {
-      throw new AppError(NOT_ACCEPTABLE, 'username_already_exists');
-    }
-
-    const hashedPassword = await EncUtil.createHash(password);
-
-    const newUser = await Users.create({
+    return await Users.create({
       username,
       email,
-      password: hashedPassword,
+      password: await EncUtil.createHash(password),
     });
-
-    return newUser;
   }
 
   getToken(

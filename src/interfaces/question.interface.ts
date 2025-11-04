@@ -1,38 +1,47 @@
-import { Request } from 'express';
-import { QuestionDTO } from '../dtos/questions/question.response';
-
-export interface CustomRequestQuestion extends Request {
-  user?: QuestionDTO; // nếu muốn attach user đang thao tác, có thể dùng QuestionDTO hoặc UserDTO
-}
-
-// Thông tin filter khi lấy nhiều câu hỏi
 export interface IFilterQuestion {
   content?: string;
   tag?: string;
   user_id?: number;
 }
 
-// Dữ liệu update câu hỏi
-export interface IUpdateQuestion {
-  content?: string;
-  description?: string;
-  score?: number;
-  tags?: string;
-  choices?: IChoice[];
+export interface Creator {
+  id: number;
+  username: string;
+  email: string;
+  avatar_url?: string | null;
 }
 
-// Dữ liệu tạo câu hỏi
 export interface ICreateQuestion {
   content: string;
-  description?: string;
-  score?: number;
-  tags?: string;
-  creator_id: number;
-  choices?: IChoice[];
+  description: string;
+  score: number;
+  tags: string;
+  by_ai: boolean;
+  choices: ICreateChoice[];
 }
 
-// Choice cho câu hỏi
-export interface IChoice {
+export interface ICreateListQuestion {
+  questions: ICreateQuestion[];
+}
+
+export interface IUpdateQuestion {
+  content: string;
+  description: string;
+  score: number;
+  tags: string;
+  by_ai: boolean;
+  choices: IUpdateChoice[];
+}
+
+export interface ICreateChoice {
   content: string;
   is_correct: boolean;
+  explanation: string;
+}
+
+export interface IUpdateChoice {
+  id?: number;
+  content: string;
+  is_correct: boolean;
+  explanation: string;
 }

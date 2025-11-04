@@ -2,8 +2,8 @@ import { Job, Queue, Worker } from 'bullmq';
 import { createTransport, Transporter } from 'nodemailer';
 import env from '../../../env';
 import { Logger } from '../../utility/logger.util';
-import { ISendMailOptions } from './interfaces/send-mail-options.interface';
 import { AWSEmailService } from './aws-email.service';
+import { ISendMailOptions } from './interfaces/send-mail-options.interface';
 
 export class MailerService {
   private static instance: MailerService;

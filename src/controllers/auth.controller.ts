@@ -1,22 +1,19 @@
 import { NextFunction, Request, Response } from 'express';
 import env from '../../env';
 import { BAD_REQUEST, RESPONSE_SUCCESS } from '../constants/constants';
-import { resOK } from '../utility/HttpException';
-import { AuthService, UserService } from '../services';
-import { TokenService } from '../modules';
 import { CustomRequest } from '../interfaces';
+import { TokenService } from '../modules';
+import { AuthService } from '../services';
 import { AppError } from '../utility/appError.util';
-import { EncUtil } from '../utility/encryption';
+import { resOK } from '../utility/HttpException';
 
 class AuthController {
   private readonly authService: AuthService;
   private readonly tokenService: TokenService;
-  private readonly userService: UserService;
 
   constructor() {
     this.authService = AuthService.getInstance();
     this.tokenService = TokenService.getInstance();
-    this.userService = UserService.getInstance();
   }
 
   async login(req: Request, res: Response, next: NextFunction) {
@@ -52,16 +49,15 @@ class AuthController {
     }
   }
 
-async register(req: Request, res: Response, next: NextFunction) {
-  try {
-    const { username, email, password } = req.body;
-    const newUser = await this.authService.register(username, email, password);
-    return res.status(RESPONSE_SUCCESS).json(resOK({ id: newUser.id }));
-  } catch (e) {
-    next(e);
+  async register(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { username, email, password } = req.body;
+      await this.authService.register(username, email, password);
+      return res.status(RESPONSE_SUCCESS).json(resOK());
+    } catch (e) {
+      next(e);
+    }
   }
-}
-
 }
 
 export const authController = new AuthController();

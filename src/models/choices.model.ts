@@ -1,11 +1,11 @@
 import {
   CreationOptional,
   DataTypes,
+  ForeignKey,
   InferAttributes,
   InferCreationAttributes,
   Model,
   Sequelize,
-  ForeignKey,
 } from 'sequelize';
 import { Questions } from './questions.model';
 
@@ -16,10 +16,18 @@ export class Choices extends Model<
   declare id: CreationOptional<number>;
   declare questionId: ForeignKey<Questions['id']>;
   declare content: string;
-  declare explanation: string | null;
+  declare explanation: string;
   declare is_correct: boolean;
-  declare created_at: Date;
-  declare updated_at: Date;
+  declare created_at: CreationOptional<Date>;
+  declare updated_at: CreationOptional<Date>;
+
+  static associate = () => {
+    Choices.belongsTo(Questions, {
+      foreignKey: 'questionId',
+      as: 'question',
+      onDelete: 'CASCADE',
+    });
+  };
 
   static initClass = (sequelize: Sequelize) => {
     Choices.init(
@@ -31,18 +39,13 @@ export class Choices extends Model<
         },
         questionId: {
           type: DataTypes.INTEGER,
-          references: {
-            model: 'questions',
-            key: 'id',
-          },
-          onDelete: 'CASCADE',
         },
         content: {
-          type: DataTypes.TEXT,
+          type: DataTypes.STRING,
           allowNull: false,
         },
         explanation: {
-          type: DataTypes.STRING,
+          type: DataTypes.TEXT,
           allowNull: true,
         },
         is_correct: {
@@ -60,12 +63,5 @@ export class Choices extends Model<
         underscored: true,
       },
     );
-  };
-
-  static associate = () => {
-    Choices.belongsTo(Questions, {
-      foreignKey: 'questionId',
-      as: 'question',
-    });
   };
 }

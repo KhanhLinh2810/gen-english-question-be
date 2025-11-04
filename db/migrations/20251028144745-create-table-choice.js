@@ -14,15 +14,15 @@ module.exports = {
         allowNull: false,
         references: { model: 'questions', key: 'id' },
         onUpdate: 'CASCADE',
-        onDelete: 'CASCADE', // khi câu hỏi bị xóa, các lựa chọn liên quan cũng bị xóa
+        onDelete: 'CASCADE',
       },
-      explanation: {
+      content: {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      content: {
+      explanation: {
         type: Sequelize.TEXT,
-        allowNull: false,
+        allowNull: true,
       },
       is_correct: {
         type: Sequelize.BOOLEAN,

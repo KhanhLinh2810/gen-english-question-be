@@ -1,41 +1,51 @@
 import {
+  Association,
+  CreationAttributes,
   CreationOptional,
   DataTypes,
+  ForeignKey,
   InferAttributes,
   InferCreationAttributes,
   Model,
-  Sequelize,
-  ForeignKey,
   NonAttribute,
-  Association,
   Optional,
-  CreationAttributes,
+  Sequelize,
 } from 'sequelize';
-import { Users } from './users.model';
 import { Choices } from './choices.model';
+import { Users } from './users.model';
 
-interface QuestionsCreationAttributes extends Optional<InferCreationAttributes<Questions>, 'id'> {
-  choices?: CreationAttributes<Choices>[]; 
+interface QuestionsCreationAttributes
+  extends Optional<InferCreationAttributes<Questions>, 'id'> {
+  choices: CreationAttributes<Choices>[];
 }
 
-
-export class Questions extends Model<InferAttributes<Questions>, QuestionsCreationAttributes>{
+export class Questions extends Model<
+  InferAttributes<Questions>,
+  QuestionsCreationAttributes
+> {
   declare id: CreationOptional<number>;
   declare content: string;
-  declare description?: string | null;
+  declare description: string;
   declare score: number;
   declare tags?: string | null;
   declare creator_id: ForeignKey<Users['id']>;
-  declare created_at: Date;
-  declare updated_at: Date;
+  declare created_at: CreationOptional<Date>;
+  declare updated_at: CreationOptional<Date>;
 
-  // 🧩 Các trường association được khai báo thêm:
   declare creator?: NonAttribute<Users>;
-  declare choices?: NonAttribute<Choices[]>;
+  declare choices: NonAttribute<Choices[]>;
 
-  static associations: {
-    creator: Association<Questions, Users>;
-    choices: Association<Questions, Choices>;
+  static associate = () => {
+    Questions.hasMany(Choices, {
+      foreignKey: 'questionId',
+      as: 'choices',
+    });
+
+    Questions.belongsTo(Users, {
+      foreignKey: 'userId',
+      as: 'creator',
+      onDelete: 'SET NULL',
+    });
   };
 
   static initClass = (sequelize: Sequelize) => {
@@ -65,11 +75,6 @@ export class Questions extends Model<InferAttributes<Questions>, QuestionsCreati
         creator_id: {
           type: DataTypes.INTEGER,
           allowNull: true,
-          references: {
-            model: 'users',
-            key: 'id',
-          },
-          onDelete: 'SET NULL',
         },
         created_at: DataTypes.DATE,
         updated_at: DataTypes.DATE,

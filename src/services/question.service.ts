@@ -1,18 +1,11 @@
-import { CreationAttributes, Op, Transaction, WhereAttributeHash } from 'sequelize';
+import _ from 'lodash';
+import { CreationAttributes, Op, Transaction } from 'sequelize';
 import { BAD_REQUEST } from '../constants/constants';
-import { Questions } from '../models/questions.model';
+import { ICreateQuestion, IFilterQuestion, IPagination } from '../interfaces';
 import { Choices } from '../models/choices.model';
+import { Questions } from '../models/questions.model';
 import { Users } from '../models/users.model';
 import { AppError } from '../utility/appError.util';
-import { IPagination } from '../interfaces';
-
-export interface IFilterQuestion {
-  content?: string;
-  tag?: string;
-  user_id?: number;
-}
-
-
 
 export class QuestionService {
   private static instance: QuestionService;
@@ -24,46 +17,22 @@ export class QuestionService {
     return this.instance;
   }
 
-  // create 1 question kèm option
-  async create(
-    data: CreationAttributes<Questions> & { choices?: CreationAttributes<Choices>[] },
-    transaction?: Transaction,
-  ) {
-    const question = await Questions.create(
-      {
-        ...data,
-        choices: data.choices || [],
-      },
-      { include: [
-        { model: Choices, as: 'choices' },
-        { model: Users, as: 'creator', attributes: ['id', 'username', 'avatar_url'] },
+  // create
+  async create(data: CreationAttributes<Questions>, transaction?: Transaction) {
+    return await Questions.create(data, {
+      include: [{ model: Choices, as: 'choices' }],
+      transaction,
+    });
+  }
 
-      ], transaction },
-    );
-    const fullQuestion = await Questions.findByPk(question.id, {
-    include: [
-      { model: Users, as: 'creator', attributes: ['id', 'username', 'avatar_url'] },
-      { model: Choices, as: 'choices', attributes: ['id', 'content'] },
-    ],
-    transaction,
-  });
-
-  return fullQuestion!;
-}
-
-  // create many questions
   async createMany(
-    data: (CreationAttributes<Questions> & { choices?: CreationAttributes<Choices>[] })[],
+    data: CreationAttributes<Questions>[],
     transaction?: Transaction,
   ) {
-    const questions = await Questions.bulkCreate(
-      data.map(item => ({
-        ...item,
-        choices: item.choices || [],
-      })),
-      { include: [{ model: Choices, as: 'choices' }], transaction },
-    );
-    return questions;
+    return await Questions.bulkCreate(data, {
+      include: [{ model: Choices, as: 'choices' }],
+      transaction,
+    });
   }
 
   // get many
@@ -72,7 +41,11 @@ export class QuestionService {
     const { rows, count } = await Questions.findAndCountAll({
       where,
       include: [
-        { model: Users, as: 'creator', attributes: ['id', 'username', 'avatar_url'] },
+        {
+          model: Users,
+          as: 'creator',
+          attributes: ['id', 'username', 'avatar_url'],
+        },
         { model: Choices, as: 'choices', attributes: ['id', 'content'] },
       ],
       limit: paging.limit,
@@ -84,63 +57,133 @@ export class QuestionService {
     return { rows, count };
   }
 
+  // get one
   async findByPk(id: number, transaction?: Transaction) {
     return await Questions.findByPk(id, { transaction });
   }
-  
-  //get question by id
-  async findOrFailWithAnswer(id: number, transaction?: Transaction) {
-    const question = await Questions.findByPk(id, {
-      include: [
-        { model: Users, as: 'creator', attributes: ['id', 'username', 'avatar_url'] },
-        { model: Choices, as: 'choices', attributes: ['id', 'content', 'is_correct'] },
-      ],
-      transaction,
-    });
-    if (!question) throw new AppError(BAD_REQUEST, 'question_not_found');
-    return question;
-  }
-  // find or fail
-  async findOrFailWithRelations(id: number, transaction?: Transaction) {
-    const question = await Questions.findByPk(id, {
-      include: [
-        { model: Users, as: 'creator', attributes: ['id', 'username', 'avatar_url'] },
-        { model: Choices, as: 'choices', attributes: ['id', 'content'] },
-      ],
-      transaction,
-    });
-    if (!question) throw new AppError(BAD_REQUEST, 'question_not_found');
-    return question;
-  }
 
-  // update 
-  async update(
+  // find or fail
+  async findOrFailWithRelations(
     id: number,
-    data: CreationAttributes<Questions> & { choices?: CreationAttributes<Choices>[] },
+    creator_id?: number,
     transaction?: Transaction,
   ) {
-    const question = await this.findOrFailWithAnswer(id, transaction);
+    const question = await Questions.findByPk(id, {
+      include: [
+        {
+          model: Users,
+          as: 'creator',
+          attributes: ['id', 'username', 'avatar_url'],
+        },
+        {
+          model: Choices,
+          as: 'choices',
+          attributes: ['id', 'content', 'is_correct', 'explanation'],
+        },
+      ],
+      transaction,
+    });
+    if (!question || (creator_id && question.creator_id !== creator_id)) {
+      throw new AppError(BAD_REQUEST, 'question_not_found');
+    }
+    return question;
+  }
+
+  // update
+  async update(
+    id: number,
+    data: CreationAttributes<Questions>,
+    creator_id: number,
+    transaction: Transaction,
+  ) {
+    this.validateParams(data);
+    const question = await this.findOrFailWithRelations(id, creator_id);
     await question.update(data, { transaction });
 
-    if (data.choices) {
-      // Xoá choices cũ
-      await Choices.destroy({ where: { questionId: id }, transaction });
-      // Thêm choices mới
-      await Choices.bulkCreate(
-        data.choices.map(opt => ({ ...opt, questionId: id })),
-        { transaction },
-      );
-    }
+    const choices = await this.updateChoice(
+      id,
+      question.choices,
+      data.choices,
+      transaction,
+    );
+    question.choices = choices;
 
     return question;
+  }
+
+  private async updateChoice(
+    questionId: number,
+    listChoiceDb: Choices[],
+    listChoiceNew: CreationAttributes<Choices>[],
+    transaction: Transaction,
+  ) {
+    const result: Choices[] = [];
+
+    const listCreateChoiceData: CreationAttributes<Choices>[] = [];
+    const listDeleteChoiceId: number[] = [];
+    const listUpdateChoiceData = new Map();
+
+    // in list new data, choice have id will be updated, choice have not id will be created
+    for (const choiceNew of listChoiceNew) {
+      if (choiceNew.id) {
+        listUpdateChoiceData.set(choiceNew.id, _.omit(choiceNew, ['id']));
+      } else {
+        listCreateChoiceData.push({
+          ...choiceNew,
+          questionId,
+        });
+      }
+    }
+
+    // in list db data, choice have id in list updated data will be updated, choice have not id in list updated data will be deleted
+    for (const choiceDb of listChoiceDb) {
+      const updateData = listUpdateChoiceData.get(choiceDb.id);
+      if (!updateData) {
+        listDeleteChoiceId.push(choiceDb.id);
+        continue;
+      }
+
+      choiceDb.set(updateData);
+      await choiceDb.save({ transaction });
+
+      result.push(choiceDb);
+    }
+
+    if (listDeleteChoiceId.length > 0) {
+      await Choices.destroy({
+        where: { id: { [Op.in]: listDeleteChoiceId } },
+        transaction,
+      });
+    }
+
+    if (listCreateChoiceData) {
+      const newChoices = await Choices.bulkCreate(listCreateChoiceData, {
+        transaction,
+      });
+      result.push(...newChoices);
+    }
+    return result;
   }
 
   // destroy
-  async destroy(condition: WhereAttributeHash) {
-    return await Questions.destroy({ where: condition });
+  async destroy(id: number) {
+    return await Questions.destroy({ where: { id: id } });
   }
 
-  // helper: build query
+  // validate
+  validateParams(data: CreationAttributes<Questions>) {
+    let count_correct_choice = 0;
+    data.choices.map((choice) => {
+      if (choice.is_correct == true) count_correct_choice++;
+    });
+    if (!count_correct_choice)
+      throw new AppError(
+        BAD_REQUEST,
+        'question_must_have_at_least_one_correct_answer',
+      );
+  }
+
+  // helper
   private buildQuery(filter: IFilterQuestion) {
     const query: any = {};
     if (filter.content) {
@@ -153,5 +196,19 @@ export class QuestionService {
       query.creator_id = filter.user_id;
     }
     return query;
+  }
+
+  // other
+  processCreateListQuestionData(
+    questions: ICreateQuestion[],
+    creator_id: number,
+  ) {
+    return questions.map((question) => {
+      this.validateParams(question);
+      return {
+        ...question,
+        creator_id,
+      };
+    });
   }
 }
