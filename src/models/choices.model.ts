@@ -9,20 +9,20 @@ import {
 } from 'sequelize';
 import { Questions } from './questions.model';
 
-export class Options extends Model<
-  InferAttributes<Options>,
-  InferCreationAttributes<Options>
+export class Choices extends Model<
+  InferAttributes<Choices>,
+  InferCreationAttributes<Choices>
 > {
   declare id: CreationOptional<number>;
   declare questionId: ForeignKey<Questions['id']>;
   declare content: string;
   declare explanation: string | null;
-  declare isCorrect: boolean;
-  declare createdAt: Date;
-  declare updatedAt: Date;
+  declare is_correct: boolean;
+  declare created_at: Date;
+  declare updated_at: Date;
 
   static initClass = (sequelize: Sequelize) => {
-    Options.init(
+    Choices.init(
       {
         id: {
           type: DataTypes.INTEGER,
@@ -45,17 +45,17 @@ export class Options extends Model<
           type: DataTypes.STRING,
           allowNull: true,
         },
-        isCorrect: {
+        is_correct: {
           type: DataTypes.BOOLEAN,
           allowNull: false,
           defaultValue: false,
         },
-        createdAt: DataTypes.DATE,
-        updatedAt: DataTypes.DATE,
+        created_at: DataTypes.DATE,
+        updated_at: DataTypes.DATE,
       },
       {
         sequelize,
-        tableName: 'options',
+        tableName: 'choices',
         timestamps: true,
         underscored: true,
       },
@@ -63,7 +63,7 @@ export class Options extends Model<
   };
 
   static associate = () => {
-    Options.belongsTo(Questions, {
+    Choices.belongsTo(Questions, {
       foreignKey: 'questionId',
       as: 'question',
     });

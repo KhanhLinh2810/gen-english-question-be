@@ -1,14 +1,14 @@
 import { JSONSchemaType } from 'ajv';
-import { ICreateQuestion, IUpdateQuestion, IOption } from '../interfaces/question.interface';
+import { ICreateQuestion, IUpdateQuestion, IChoice } from '../interfaces/question.interface';
 
-// Schema cho Option
-const optionSchema: JSONSchemaType<IOption> = {
+// Schema cho Choice
+const choiceSchema: JSONSchemaType<IChoice> = {
   type: 'object',
   properties: {
     content: { type: 'string', minLength: 1 },
-    isCorrect: { type: 'boolean' },
+    is_correct: { type: 'boolean' },
   },
-  required: ['content', 'isCorrect'],
+  required: ['content', 'is_correct'],
   additionalProperties: false,
 };
 
@@ -20,10 +20,10 @@ export const createQuestionSchema: JSONSchemaType<ICreateQuestion> = {
     description: { type: 'string', nullable: true },
     score: { type: 'integer', nullable: true, minimum: 0 },
     tags: { type: 'string', nullable: true },
-    creatorId: { type: 'integer'},
-    options: {
+    creator_id: { type: 'integer'},
+    choices: {
       type: 'array',
-      items: optionSchema,
+      items: choiceSchema,
       nullable: true,
     },
   },
@@ -39,9 +39,9 @@ export const updateQuestionSchema: JSONSchemaType<IUpdateQuestion> = {
     description: { type: 'string', nullable: true },
     score: { type: 'integer', nullable: true, minimum: 0 },
     tags: { type: 'string', nullable: true },
-    options: {
+    choices: {
       type: 'array',
-      items: optionSchema,
+      items: choiceSchema,
       nullable: true,
     },
   },

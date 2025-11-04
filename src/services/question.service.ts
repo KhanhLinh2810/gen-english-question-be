@@ -1,7 +1,7 @@
 import { CreationAttributes, Op, Transaction, WhereAttributeHash } from 'sequelize';
 import { BAD_REQUEST } from '../constants/constants';
 import { Questions } from '../models/questions.model';
-import { Options } from '../models/options.model';
+import { Choices } from '../models/choices.model';
 import { Users } from '../models/users.model';
 import { AppError } from '../utility/appError.util';
 import { IPagination } from '../interfaces';
@@ -26,16 +26,16 @@ export class QuestionService {
 
   // create 1 question kèm option
   async create(
-    data: CreationAttributes<Questions> & { options?: CreationAttributes<Options>[] },
+    data: CreationAttributes<Questions> & { choices?: CreationAttributes<Choices>[] },
     transaction?: Transaction,
   ) {
     const question = await Questions.create(
       {
         ...data,
-        options: data.options || [],
+        choices: data.choices || [],
       },
       { include: [
-        { model: Options, as: 'options' },
+        { model: Choices, as: 'choices' },
         { model: Users, as: 'creator', attributes: ['id', 'username', 'avatar_url'] },
 
       ], transaction },
@@ -43,7 +43,7 @@ export class QuestionService {
     const fullQuestion = await Questions.findByPk(question.id, {
     include: [
       { model: Users, as: 'creator', attributes: ['id', 'username', 'avatar_url'] },
-      { model: Options, as: 'options', attributes: ['id', 'content'] },
+      { model: Choices, as: 'choices', attributes: ['id', 'content'] },
     ],
     transaction,
   });
@@ -53,15 +53,15 @@ export class QuestionService {
 
   // create many questions
   async createMany(
-    data: (CreationAttributes<Questions> & { options?: CreationAttributes<Options>[] })[],
+    data: (CreationAttributes<Questions> & { choices?: CreationAttributes<Choices>[] })[],
     transaction?: Transaction,
   ) {
     const questions = await Questions.bulkCreate(
       data.map(item => ({
         ...item,
-        options: item.options || [],
+        choices: item.choices || [],
       })),
-      { include: [{ model: Options, as: 'options' }], transaction },
+      { include: [{ model: Choices, as: 'choices' }], transaction },
     );
     return questions;
   }
@@ -73,7 +73,7 @@ export class QuestionService {
       where,
       include: [
         { model: Users, as: 'creator', attributes: ['id', 'username', 'avatar_url'] },
-        { model: Options, as: 'options', attributes: ['id', 'content'] },
+        { model: Choices, as: 'choices', attributes: ['id', 'content'] },
       ],
       limit: paging.limit,
       offset: paging.offset,
@@ -93,7 +93,7 @@ export class QuestionService {
     const question = await Questions.findByPk(id, {
       include: [
         { model: Users, as: 'creator', attributes: ['id', 'username', 'avatar_url'] },
-        { model: Options, as: 'options', attributes: ['id', 'content', 'is_correct'] },
+        { model: Choices, as: 'choices', attributes: ['id', 'content', 'is_correct'] },
       ],
       transaction,
     });
@@ -105,7 +105,7 @@ export class QuestionService {
     const question = await Questions.findByPk(id, {
       include: [
         { model: Users, as: 'creator', attributes: ['id', 'username', 'avatar_url'] },
-        { model: Options, as: 'options', attributes: ['id', 'content'] },
+        { model: Choices, as: 'choices', attributes: ['id', 'content'] },
       ],
       transaction,
     });
@@ -116,18 +116,18 @@ export class QuestionService {
   // update 
   async update(
     id: number,
-    data: Partial<CreationAttributes<Questions>> & { options?: CreationAttributes<Options>[] },
+    data: CreationAttributes<Questions> & { choices?: CreationAttributes<Choices>[] },
     transaction?: Transaction,
   ) {
     const question = await this.findOrFailWithAnswer(id, transaction);
     await question.update(data, { transaction });
 
-    if (data.options) {
-      // Xoá options cũ
-      await Options.destroy({ where: { questionId: id }, transaction });
-      // Thêm options mới
-      await Options.bulkCreate(
-        data.options.map(opt => ({ ...opt, questionId: id })),
+    if (data.choices) {
+      // Xoá choices cũ
+      await Choices.destroy({ where: { questionId: id }, transaction });
+      // Thêm choices mới
+      await Choices.bulkCreate(
+        data.choices.map(opt => ({ ...opt, questionId: id })),
         { transaction },
       );
     }
@@ -150,7 +150,7 @@ export class QuestionService {
       query.tags = { [Op.iLike]: `%${filter.tag}%` };
     }
     if (filter.user_id) {
-      query.creatorId = filter.user_id;
+      query.creator_id = filter.user_id;
     }
     return query;
   }

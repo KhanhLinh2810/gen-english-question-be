@@ -5,8 +5,6 @@ import { loginUserSchema, registerUserSchema } from '../validators';
 import { authController } from '../controllers';
 const router = Router();
 
-console.log('authController:', authController);
-
 // router.post('/auth/login', validateBody(loginUserSchema), authController.login);
 router.post('/auth/login', validateBody(loginUserSchema), authController.login.bind(authController));
 

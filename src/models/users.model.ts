@@ -4,21 +4,22 @@ import {
   InferAttributes,
   InferCreationAttributes,
   Model,
+  SaveOptions,
   Sequelize,
 } from 'sequelize';
 
 export class Users extends Model<
   InferAttributes<Users>,
-  InferCreationAttributes<Users, { omit: 'createdAt' | 'updatedAt' }>
+  InferCreationAttributes<Users, { omit: 'created_at' | 'updated_at' }>
 > {
   declare id: CreationOptional<number>;
   declare avatar_url?: string | null;
   declare username: string;
   declare email: string;
   declare password: string;
-  declare createdAt: Date;
-  declare updatedAt: Date;
-  declare deletedAt: CreationOptional<Date>;
+  declare created_at: Date;
+  declare updated_at: Date;
+  declare deleted_at: CreationOptional<Date>;
 
   // Associations
 
@@ -43,9 +44,9 @@ export class Users extends Model<
           unique: true,
         },
         password: DataTypes.TEXT,
-        createdAt: DataTypes.DATE,
-        updatedAt: DataTypes.DATE,
-        deletedAt: {
+        created_at: DataTypes.DATE,
+        updated_at: DataTypes.DATE,
+        deleted_at: {
           type: DataTypes.DATE,
           allowNull: true,
           defaultValue: null,
@@ -57,8 +58,8 @@ export class Users extends Model<
         timestamps: true,
         paranoid: true,
         underscored: true,
-        createdAt: 'createdAt',
-        updatedAt: 'updatedAt',
+        // created_at: 'created_at',
+        // updated_at: 'updated_at',
         name: {
           singular: 'user',
           plural: 'users',

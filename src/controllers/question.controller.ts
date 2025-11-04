@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
 import _ from 'lodash';
-import { RESPONSE_SUCCESS } from '../constants/constants';
+import { RESPONSE_SUCCESS, NOT_FOUND } from '../constants/constants';
 import { QuestionDTO, ListQuestionResponse } from '../dtos/questions';
 import { CustomRequest, IFilterQuestion } from '../interfaces';
 import { QuestionService } from '../services/question.service';
 import { resOK } from '../utility/HttpException';
 import { paginate } from '../utility/utils';
+import { NOT } from 'sequelize/types/deferrable';
 
 export class QuestionController {
   private readonly questionService: QuestionService;
@@ -42,9 +43,15 @@ export class QuestionController {
     try {
       const questionId = _.toSafeInteger(req.params.id);
       const question = await this.questionService.findOrFailWithRelations(questionId);
+      if (!question) {
+        return res
+        .status(NOT_FOUND)
+        .json({ message: 'Question not found' });
+      }
       return res
         .status(RESPONSE_SUCCESS)
         .json(resOK(new QuestionDTO(question)));
+      
     } catch (e) {
       next(e);
     }
@@ -58,12 +65,11 @@ export class QuestionController {
         return res.status(401).json({ message: 'Unauthorized' });
       }
       const userId = user.id;
-      console.log('Creating question for user ID:', userId);
       const data = req.body;
 
       const question = await this.questionService.create({
         ...data,
-        creatorId: userId,
+        creator_id: userId,
       });
 
       return res
@@ -80,6 +86,11 @@ export class QuestionController {
       const questionId = _.toSafeInteger(req.params.id);
       const data = req.body;
       const question = await this.questionService.update(questionId, data);
+      if (!question) {
+        return res
+        .status(NOT_FOUND)
+        .json({ message: 'Question not found' });
+      }
       return res
         .status(RESPONSE_SUCCESS)
         .json(resOK(new QuestionDTO(question)));
@@ -93,6 +104,11 @@ export class QuestionController {
     try {
       const questionId = _.toSafeInteger(req.params.id);
       const question = await this.questionService.findOrFailWithRelations(questionId);
+      if (!question) {
+        return res
+        .status(NOT_FOUND)
+        .json({ message: 'Question not found' });
+      }
       await question.destroy();
       return res.status(RESPONSE_SUCCESS).json(resOK(null));
     } catch (e) {

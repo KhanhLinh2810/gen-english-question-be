@@ -12,10 +12,10 @@ import {
   CreationAttributes,
 } from 'sequelize';
 import { Users } from './users.model';
-import { Options } from './options.model';
+import { Choices } from './choices.model';
 
 interface QuestionsCreationAttributes extends Optional<InferCreationAttributes<Questions>, 'id'> {
-  options?: CreationAttributes<Options>[]; 
+  choices?: CreationAttributes<Choices>[]; 
 }
 
 
@@ -25,17 +25,17 @@ export class Questions extends Model<InferAttributes<Questions>, QuestionsCreati
   declare description?: string | null;
   declare score: number;
   declare tags?: string | null;
-  declare creatorId: ForeignKey<Users['id']>;
-  declare createdAt: Date;
-  declare updatedAt: Date;
+  declare creator_id: ForeignKey<Users['id']>;
+  declare created_at: Date;
+  declare updated_at: Date;
 
   // 🧩 Các trường association được khai báo thêm:
   declare creator?: NonAttribute<Users>;
-  declare options?: NonAttribute<Options[]>;
+  declare choices?: NonAttribute<Choices[]>;
 
   static associations: {
     creator: Association<Questions, Users>;
-    options: Association<Questions, Options>;
+    choices: Association<Questions, Choices>;
   };
 
   static initClass = (sequelize: Sequelize) => {
@@ -62,7 +62,7 @@ export class Questions extends Model<InferAttributes<Questions>, QuestionsCreati
           type: DataTypes.STRING,
           allowNull: true,
         },
-        creatorId: {
+        creator_id: {
           type: DataTypes.INTEGER,
           allowNull: true,
           references: {
@@ -71,8 +71,8 @@ export class Questions extends Model<InferAttributes<Questions>, QuestionsCreati
           },
           onDelete: 'SET NULL',
         },
-        createdAt: DataTypes.DATE,
-        updatedAt: DataTypes.DATE,
+        created_at: DataTypes.DATE,
+        updated_at: DataTypes.DATE,
       },
       {
         sequelize,
@@ -81,17 +81,5 @@ export class Questions extends Model<InferAttributes<Questions>, QuestionsCreati
         underscored: true,
       },
     );
-  };
-
-  static associate = () => {
-    Questions.belongsTo(Users, {
-      foreignKey: 'creatorId',
-      as: 'creator',
-    });
-
-    Questions.hasMany(Options, {
-      foreignKey: 'questionId',
-      as: 'options',
-    });
   };
 }

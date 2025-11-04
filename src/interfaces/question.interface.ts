@@ -18,7 +18,7 @@ export interface IUpdateQuestion {
   description?: string;
   score?: number;
   tags?: string;
-  options?: IOption[];
+  choices?: IChoice[];
 }
 
 // Dữ liệu tạo câu hỏi
@@ -27,12 +27,12 @@ export interface ICreateQuestion {
   description?: string;
   score?: number;
   tags?: string;
-  creatorId: number;
-  options?: IOption[];
+  creator_id: number;
+  choices?: IChoice[];
 }
 
-// Option cho câu hỏi
-export interface IOption {
+// Choice cho câu hỏi
+export interface IChoice {
   content: string;
-  isCorrect: boolean;
+  is_correct: boolean;
 }

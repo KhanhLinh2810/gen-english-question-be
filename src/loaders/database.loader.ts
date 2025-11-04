@@ -1,6 +1,6 @@
 import { Dialect, Sequelize } from 'sequelize';
 import env from '../../env';
-import { Counter, File, Users, UserSearchModel, Questions, Options } from '../models';
+import { Counter, File, Users, UserSearchModel, Questions, Choices } from '../models';
 
 const dbConfig = env.database;
 
@@ -73,12 +73,12 @@ UserSearchModel.initClass(sequelize);
 Counter.initClass(sequelize);
 File.initClass(sequelize);
 Questions.initClass(sequelize);
-Options.initClass(sequelize);
+Choices.initClass(sequelize);
 
-Questions.associate?.();
-Options.associate?.();
-
-// Relationships
+Questions.belongsTo(Users, { foreignKey: 'creatorId', as: 'creator' });
+Questions.hasMany(Choices, { foreignKey: 'questionId', as: 'choices' });
+Users.hasMany(Questions, { foreignKey: 'creatorId', as: 'questions' });
+Choices.belongsTo(Questions, { foreignKey: 'questionId', as: 'question' });
 
 export const db = {
   sequalize: sequelize,

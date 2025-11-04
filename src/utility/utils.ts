@@ -5,7 +5,7 @@ import env from '../../env';
 
 export function paginate(
 	req: Request,
-	sortBy = 'createdAt',
+	sortBy = 'created_at',
 	sortOrder: 'asc' | 'desc' = 'desc',
 ): {
 	page: number;

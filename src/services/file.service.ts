@@ -67,7 +67,7 @@ export class FileService {
       where,
       order: [
         ['displayOrder', 'ASC'],
-        ['createdAt', 'ASC'],
+        ['created_at', 'ASC'],
       ],
     });
   }
@@ -93,7 +93,7 @@ export class FileService {
       where,
       order: [
         ['displayOrder', 'ASC'],
-        ['createdAt', 'ASC'],
+        ['created_at', 'ASC'],
       ],
     });
   }
