@@ -60,6 +60,8 @@ export class Choices extends Model<
         sequelize,
         tableName: 'choices',
         timestamps: true,
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
         underscored: true,
       },
     );

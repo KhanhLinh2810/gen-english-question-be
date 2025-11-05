@@ -29,6 +29,7 @@ const PATTERN = {
   AMOUNT: '^(0|[1-9][0-9]*)$',
   DATE: '^\\d{4}-\\d{2}-\\d{2}$',
   ZIP_CODE: '^[0-9]{3}-[0-9]{4}$|^[0-9]{7}$',
+  DATE_ISO_8601: '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$',
 };
 
 const CURRENCY_DEFAULT = 'JPY';

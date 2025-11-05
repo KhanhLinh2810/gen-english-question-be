@@ -135,12 +135,12 @@ export class UserService {
     const query: any = {};
     if (filter.username) {
       query.username = {
-        [Op.iLike]: `%${escapeSearchKeyword(filter.username)}%`,
+        [Op.like]: `%${escapeSearchKeyword(filter.username)}%`,
       };
     }
     if (filter.email) {
       query.email = {
-        [Op.iLike]: `%${escapeSearchKeyword(filter.email)}%`,
+        [Op.like]: `%${escapeSearchKeyword(filter.email)}%`,
       };
     }
 

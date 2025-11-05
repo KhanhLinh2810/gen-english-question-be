@@ -53,7 +53,7 @@ export const createListQuestionSchema: JSONSchemaType<ICreateListQuestion> = {
 const updateChoiceSchema: JSONSchemaType<IUpdateChoice> = {
   type: 'object',
   properties: {
-    id: { type: 'number', nullable: true },
+    id: { type: 'integer', nullable: true },
     content: { type: 'string', minLength: 1 },
     is_correct: { type: 'boolean' },
     explanation: { type: 'string' },
