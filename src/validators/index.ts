@@ -67,3 +67,4 @@ export * from './auth.validator';
 export * from './user.validator';
 export * from './question.validator';
 export * from './exam.validator';
+export * from './exam-attempt.validator';

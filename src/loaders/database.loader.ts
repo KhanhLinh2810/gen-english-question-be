@@ -3,6 +3,7 @@ import env from '../../env';
 import {
   Choices,
   Counter,
+  ExamAttempts,
   Exams,
   File,
   Questions,
@@ -83,10 +84,12 @@ File.initClass(sequelize);
 Questions.initClass(sequelize);
 Choices.initClass(sequelize);
 Exams.initClass(sequelize);
+ExamAttempts.initClass(sequelize);
 
 Questions.associate?.();
 Choices.associate?.();
 Exams.associate?.();
+ExamAttempts.associate?.();
 
 export const db = {
   sequalize: sequelize,

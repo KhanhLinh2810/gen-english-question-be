@@ -1,9 +1,7 @@
 import {
-  Association,
   CreationAttributes,
   CreationOptional,
   DataTypes,
-  ForeignKey,
   InferAttributes,
   InferCreationAttributes,
   Model,

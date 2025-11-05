@@ -110,7 +110,7 @@ export class ExamService {
     id: number,
     data: CreationAttributes<Exams>,
     creator_id: number,
-    transaction: Transaction,
+    transaction?: Transaction,
   ) {
     const question = await this.findOrFail(id, creator_id);
     await question.update(data, { transaction });
