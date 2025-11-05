@@ -43,7 +43,7 @@ export class ExamAttempts extends Model<
   declare updated_at: CreationOptional<Date>;
 
   // Associations
-  declare exam?: NonAttribute<Exams>;
+  declare exam: NonAttribute<Exams>;
   declare user?: NonAttribute<Users>;
 
   static associate = () => {

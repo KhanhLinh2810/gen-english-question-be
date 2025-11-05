@@ -5,6 +5,7 @@ import { CustomRequest } from '../interfaces';
 import { ExamAttemptService } from '../services';
 import { AppError } from '../utility/appError.util';
 import { resOK } from '../utility/HttpException';
+import { db } from '../loaders/database.loader';
 
 export class ExamAttemptController {
   private readonly examAttemptService: ExamAttemptService;
@@ -45,6 +46,28 @@ export class ExamAttemptController {
       );
       return res.status(RESPONSE_SUCCESS).json(resOK());
     } catch (e) {
+      next(e);
+    }
+  }
+
+  async submit(req: Request, res: Response, next: NextFunction) {
+    const transaction = await db.sequalize.transaction();
+    try {
+      const user = (req as CustomRequest).user;
+      if (!user) {
+        throw new AppError(BAD_REQUEST, 'user_not_found');
+      }
+
+      const result = await this.examAttemptService.submit(
+        req.body,
+        _.toSafeInteger(req.params.id),
+        user.id,
+        transaction,
+      );
+      await transaction.commit();
+      return res.status(RESPONSE_SUCCESS).json(resOK(result));
+    } catch (e) {
+      await transaction.rollback();
       next(e);
     }
   }
