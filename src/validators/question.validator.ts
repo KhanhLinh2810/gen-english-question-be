@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv';
+import { QuestionType } from '../enums';
 import {
   ICreateChoice,
   ICreateListQuestion,
@@ -6,7 +7,6 @@ import {
   IUpdateChoice,
   IUpdateQuestion,
 } from '../interfaces';
-import { QuestionType } from '../enums';
 
 const questionTypeValues = Object.values(QuestionType).filter(
   (v): v is number => typeof v === 'number',

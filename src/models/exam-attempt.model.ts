@@ -8,9 +8,9 @@ import {
   Optional,
   Sequelize,
 } from 'sequelize';
-import { Users } from './users.model';
-import { Exams } from './exams.model';
 import { IAnswerInExamAttempt } from '../interfaces';
+import { Exams } from './exams.model';
+import { Users } from './users.model';
 
 interface ExamAttemptsCreationAttributes
   extends Optional<

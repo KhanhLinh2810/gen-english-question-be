@@ -1,14 +1,16 @@
 import _ from 'lodash';
+import { CreationAttributes, Op, Transaction } from 'sequelize';
+import { BAD_REQUEST } from '../constants/constants';
 import {
   IAnswerInExamAttempt,
   ICreateExamAttempt,
+  IFilterExamAttempt,
+  IPagination,
   ISaveAnswerExamAttempt,
 } from '../interfaces';
+import { Choices, ExamAttempts, Exams, Questions, Users } from '../models';
 import { AppError } from '../utility/appError.util';
-import { BAD_REQUEST } from '../constants/constants';
-import { Choices, ExamAttempts, Exams, Questions } from '../models';
-import { CreationAttributes, Op, Transaction } from 'sequelize';
-import { areArraysEqual } from '../utility/utils';
+import { areArraysEqual, escapeForILike } from '../utility/utils';
 
 export class ExamAttemptService {
   private static instance: ExamAttemptService;
@@ -26,6 +28,39 @@ export class ExamAttemptService {
     transaction?: Transaction,
   ) {
     return await ExamAttempts.create(data, { transaction });
+  }
+
+  // get many
+  async getMany(filter: IFilterExamAttempt, paging: IPagination) {
+    const { query: query_for_user, is_required: required_for_user } =
+      this.buildQueryUser(filter);
+    const { query: query_for_exam, is_required: required_for_exam } =
+      this.buildQueryExam(filter);
+    return await ExamAttempts.findAndCountAll({
+      where: {
+        finished_at: { [Op.ne]: null },
+      },
+      include: [
+        {
+          model: Users,
+          as: 'user',
+          attributes: ['id', 'username', 'avatar_url'],
+          where: query_for_user,
+          required: required_for_user,
+        },
+        {
+          model: Exams,
+          as: 'exam',
+          attributes: ['id', 'title'],
+          where: query_for_exam,
+          required: required_for_exam,
+        },
+      ],
+      limit: paging.limit,
+      offset: paging.offset,
+      order: [[paging.order_by, paging.sort]],
+      distinct: true,
+    });
   }
 
   // get one
@@ -180,6 +215,35 @@ export class ExamAttemptService {
       ...exam_attempt.dataValues,
       exam: _.pick(exam_attempt.exam, ['title', 'note', 'id']),
     };
+  }
+
+  // helper
+  private buildQueryUser(filter: IFilterExamAttempt) {
+    const query: any = {};
+    let is_required = false;
+    if (filter.user_id) {
+      query.id = _.toSafeInteger(filter.user_id);
+      is_required = true;
+    }
+    if (filter.username) {
+      query.username = { [Op.like]: escapeForILike(filter.username) };
+      is_required = true;
+    }
+    return { query, is_required };
+  }
+
+  private buildQueryExam(filter: IFilterExamAttempt) {
+    const query: any = {};
+    let is_required = false;
+    if (filter.exam_id) {
+      query.id = _.toSafeInteger(filter.exam_id);
+      is_required = true;
+    }
+    if (filter.title) {
+      query.title = { [Op.like]: escapeForILike(filter.title) };
+      is_required = true;
+    }
+    return { query, is_required };
   }
 
   // other

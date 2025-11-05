@@ -25,7 +25,7 @@ export class ExamService {
   // get many
   async getMany(filter: IFilterExam, paging: IPagination) {
     const query = this.buildQuery(filter);
-    const { query: queryForCreator, is_required: requiredForCreator } =
+    const { query: query_for_creator, is_required: required_for_creator } =
       this.buildQueryCretor(filter);
     return await Exams.findAndCountAll({
       where: query,
@@ -34,8 +34,8 @@ export class ExamService {
           model: Users,
           as: 'creator',
           attributes: ['id', 'username', 'avatar_url'],
-          where: queryForCreator,
-          required: requiredForCreator,
+          where: query_for_creator,
+          required: required_for_creator,
         },
       ],
       limit: paging.limit,
