@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv';
-import { ICreateExamAttempt, ISaveAnswerExamAttempt } from '../interfaces';
 import { property } from 'lodash';
+import { ICreateExamAttempt, ISaveAnswerExamAttempt } from '../interfaces';
 
 export const createExamAttemptSchema: JSONSchemaType<ICreateExamAttempt> = {
   type: 'object',

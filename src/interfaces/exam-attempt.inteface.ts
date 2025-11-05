@@ -14,3 +14,10 @@ export interface ISaveAnswerExamAttempt {
     choice_id: number;
   }[];
 }
+
+export interface IFilterExamAttempt {
+  exam_id?: number;
+  title?: string;
+  user_id?: number;
+  username?: string;
+}

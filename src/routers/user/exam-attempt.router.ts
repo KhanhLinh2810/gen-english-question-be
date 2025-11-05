@@ -15,9 +15,16 @@ router.post(
   examAttemptController.create.bind(examAttemptController),
 );
 router.post(
-  '/:id/answers',
+  '/:id/answer',
   validateBody(saveAnswerExamAttemptSchema),
   examAttemptController.saveAnswer.bind(examAttemptController),
 );
+router.post(
+  '/:id/submit',
+  validateBody(saveAnswerExamAttemptSchema),
+  examAttemptController.submit.bind(examAttemptController),
+);
+
+router.get('/', examAttemptController.index.bind(examAttemptController));
 
 export default router;

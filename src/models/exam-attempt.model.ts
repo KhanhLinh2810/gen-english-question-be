@@ -8,9 +8,9 @@ import {
   Optional,
   Sequelize,
 } from 'sequelize';
-import { Users } from './users.model';
-import { Exams } from './exams.model';
 import { IAnswerInExamAttempt } from '../interfaces';
+import { Exams } from './exams.model';
+import { Users } from './users.model';
 
 interface ExamAttemptsCreationAttributes
   extends Optional<
@@ -43,7 +43,7 @@ export class ExamAttempts extends Model<
   declare updated_at: CreationOptional<Date>;
 
   // Associations
-  declare exam?: NonAttribute<Exams>;
+  declare exam: NonAttribute<Exams>;
   declare user?: NonAttribute<Users>;
 
   static associate = () => {

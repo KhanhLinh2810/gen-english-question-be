@@ -9,9 +9,9 @@ import {
   Optional,
   Sequelize,
 } from 'sequelize';
+import { QuestionType } from '../enums';
 import { Choices } from './choices.model';
 import { Users } from './users.model';
-import { QuestionType } from '../enums';
 
 interface QuestionsCreationAttributes
   extends Optional<InferCreationAttributes<Questions>, 'id'> {

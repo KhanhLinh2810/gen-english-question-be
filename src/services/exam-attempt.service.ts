@@ -1,15 +1,16 @@
 import _ from 'lodash';
+import { CreationAttributes, Op, Transaction } from 'sequelize';
+import { BAD_REQUEST } from '../constants/constants';
 import {
   IAnswerInExamAttempt,
   ICreateExamAttempt,
+  IFilterExamAttempt,
+  IPagination,
   ISaveAnswerExamAttempt,
 } from '../interfaces';
+import { Choices, ExamAttempts, Exams, Questions, Users } from '../models';
 import { AppError } from '../utility/appError.util';
-import { BAD_REQUEST } from '../constants/constants';
-import { Choices, ExamAttempts, Exams, Questions } from '../models';
-import { CreationAttributes, Op, Transaction } from 'sequelize';
-import { duration } from 'moment';
-import { title } from 'process';
+import { areArraysEqual, escapeForILike } from '../utility/utils';
 
 export class ExamAttemptService {
   private static instance: ExamAttemptService;
@@ -29,9 +30,56 @@ export class ExamAttemptService {
     return await ExamAttempts.create(data, { transaction });
   }
 
+  // get many
+  async getMany(filter: IFilterExamAttempt, paging: IPagination) {
+    const { query: query_for_user, is_required: required_for_user } =
+      this.buildQueryUser(filter);
+    const { query: query_for_exam, is_required: required_for_exam } =
+      this.buildQueryExam(filter);
+    return await ExamAttempts.findAndCountAll({
+      where: {
+        finished_at: { [Op.ne]: null },
+      },
+      include: [
+        {
+          model: Users,
+          as: 'user',
+          attributes: ['id', 'username', 'avatar_url'],
+          where: query_for_user,
+          required: required_for_user,
+        },
+        {
+          model: Exams,
+          as: 'exam',
+          attributes: ['id', 'title'],
+          where: query_for_exam,
+          required: required_for_exam,
+        },
+      ],
+      limit: paging.limit,
+      offset: paging.offset,
+      order: [[paging.order_by, paging.sort]],
+      distinct: true,
+    });
+  }
+
   // get one
   async findByPk(id: number, transaction?: Transaction) {
     return await ExamAttempts.findByPk(id, {
+      include: [
+        {
+          model: Exams,
+          as: 'exam',
+          attributes: [
+            'total_question',
+            'list_question',
+            'title',
+            'note',
+            'id',
+          ],
+          required: true,
+        },
+      ],
       transaction,
     });
   }
@@ -61,6 +109,18 @@ export class ExamAttemptService {
       user_id,
       transaction,
     );
+    const now = new Date();
+    const lastest_finished_at = new Date(exam_attempt.started_at);
+    lastest_finished_at.setMinutes(
+      lastest_finished_at.getMinutes() + exam_attempt.duration,
+    );
+
+    if (
+      exam_attempt.finished_at ||
+      now.getTime() > lastest_finished_at.getTime()
+    ) {
+      throw new AppError(BAD_REQUEST, 'exam_submission_closed');
+    }
     const map_question_to_choice = new Map();
     data.list_answer.map((answer) =>
       map_question_to_choice.set(answer.question_id, answer.choice_id),
@@ -71,6 +131,119 @@ export class ExamAttemptService {
     });
     exam_attempt.set({ list_answer: list_answer_db });
     await exam_attempt.save({ transaction });
+    return exam_attempt;
+  }
+
+  async submit(
+    data: ISaveAnswerExamAttempt,
+    exam_attempt_id: number,
+    user_id: number,
+    transaction?: Transaction,
+  ) {
+    const finished_at = new Date();
+    // save answer
+    const exam_attempt = await this.saveAnswer(
+      data,
+      exam_attempt_id,
+      user_id,
+      transaction,
+    );
+
+    const map_question_to_choice = new Map();
+    exam_attempt.list_answer.map((answer) => {
+      const question_id = answer.question_id;
+
+      if (map_question_to_choice.has(question_id)) {
+        const value = [
+          ...map_question_to_choice.get(question_id),
+          answer.choice_id,
+        ];
+        map_question_to_choice.set(question_id, value);
+      } else {
+        map_question_to_choice.set(question_id, [answer.choice_id]);
+      }
+    });
+    // get question db
+    const map_question_to_score = new Map();
+    const list_question_id = exam_attempt.exam.list_question.map((question) => {
+      map_question_to_score.set(question.question_id, question.score);
+      return question.question_id;
+    });
+    const list_question = await Questions.findAll({
+      where: { id: { [Op.in]: list_question_id } },
+      include: [
+        {
+          model: Choices,
+          as: 'choices',
+          attributes: ['is_correct', 'id'],
+          where: {
+            is_correct: true,
+          },
+        },
+      ],
+      attributes: ['id'],
+    });
+
+    let correct_question = 0,
+      wrong_question = 0,
+      score = 0;
+
+    for (const question of list_question) {
+      const list_correct_choice_id = question.choices.map(
+        (choice) => choice.id,
+      );
+      const list_selected_choice_id = map_question_to_choice.get(question.id);
+      if (list_selected_choice_id.length === 0 || list_correct_choice_id)
+        continue;
+      if (areArraysEqual(list_correct_choice_id, list_selected_choice_id)) {
+        correct_question++;
+        score += map_question_to_score.get(question.id);
+      } else {
+        wrong_question++;
+      }
+    }
+
+    exam_attempt.set({
+      total_question: list_question.length,
+      finished_at,
+      correct_question,
+      wrong_question,
+      score,
+    });
+    await exam_attempt.save({ transaction });
+    return {
+      ...exam_attempt.dataValues,
+      exam: _.pick(exam_attempt.exam, ['title', 'note', 'id']),
+    };
+  }
+
+  // helper
+  private buildQueryUser(filter: IFilterExamAttempt) {
+    const query: any = {};
+    let is_required = false;
+    if (filter.user_id) {
+      query.id = _.toSafeInteger(filter.user_id);
+      is_required = true;
+    }
+    if (filter.username) {
+      query.username = { [Op.like]: escapeForILike(filter.username) };
+      is_required = true;
+    }
+    return { query, is_required };
+  }
+
+  private buildQueryExam(filter: IFilterExamAttempt) {
+    const query: any = {};
+    let is_required = false;
+    if (filter.exam_id) {
+      query.id = _.toSafeInteger(filter.exam_id);
+      is_required = true;
+    }
+    if (filter.title) {
+      query.title = { [Op.like]: escapeForILike(filter.title) };
+      is_required = true;
+    }
+    return { query, is_required };
   }
 
   // other

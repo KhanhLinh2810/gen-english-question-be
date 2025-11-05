@@ -3,8 +3,8 @@ import { userController } from '../../controllers';
 import { validateBody } from '../../middleware/validation.middleware';
 import { uploadImage } from '../../utility/media.util';
 import { updatePasswordUserSchema, updateUserSchema } from '../../validators';
-import examRouter from './exam.router';
 import examAttemptRouter from './exam-attempt.router';
+import examRouter from './exam.router';
 import questionRouter from './question.router';
 
 const router = Router();
