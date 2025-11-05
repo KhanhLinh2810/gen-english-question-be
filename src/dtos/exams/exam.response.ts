@@ -9,6 +9,7 @@ interface QuestionItem {
   description?: string;
   score: number;
   score_in_exam: number;
+  type: number;
   choices: ChoiceDTO[];
 }
 
@@ -65,6 +66,7 @@ export class ExamDTO {
         description: questionDb.description ?? undefined,
         score: questionDb.score,
         score_in_exam: map_question_to_score.get(questionDb.id),
+        type: questionDb.type,
         choices,
       });
     }

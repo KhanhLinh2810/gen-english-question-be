@@ -6,6 +6,11 @@ import {
   IUpdateChoice,
   IUpdateQuestion,
 } from '../interfaces';
+import { QuestionType } from '../enums';
+
+const questionTypeValues = Object.values(QuestionType).filter(
+  (v): v is number => typeof v === 'number',
+);
 
 // Create Question
 const createChoiceSchema: JSONSchemaType<ICreateChoice> = {
@@ -24,6 +29,7 @@ export const createQuestionSchema: JSONSchemaType<ICreateQuestion> = {
     content: { type: 'string', minLength: 1, maxLength: 512 },
     description: { type: 'string' },
     score: { type: 'number', minimum: 0, maximum: 5 },
+    type: { type: 'number', enum: questionTypeValues },
     tags: { type: 'string', default: '[]' },
     by_ai: { type: 'boolean' },
     choices: {
@@ -67,6 +73,7 @@ export const updateQuestionSchema: JSONSchemaType<IUpdateQuestion> = {
     content: { type: 'string', minLength: 1 },
     description: { type: 'string' },
     score: { type: 'number', minimum: 0, maximum: 5 },
+    type: { type: 'number', enum: questionTypeValues },
     tags: { type: 'string' },
     by_ai: { type: 'boolean' },
     choices: {

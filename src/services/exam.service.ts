@@ -99,7 +99,7 @@ export class ExamService {
           attributes: ['content', 'is_correct', 'id', 'explanation'],
         },
       ],
-      attributes: ['content', 'description', 'score', 'id'],
+      attributes: ['content', 'description', 'score', 'id', 'type'],
     });
 
     return new ExamDTO(exam, list_question);
