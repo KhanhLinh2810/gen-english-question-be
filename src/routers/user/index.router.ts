@@ -3,11 +3,13 @@ import { userController } from '../../controllers';
 import { validateBody } from '../../middleware/validation.middleware';
 import { uploadImage } from '../../utility/media.util';
 import { updatePasswordUserSchema, updateUserSchema } from '../../validators';
+import examRouter from './exam.router';
 import questionRouter from './question.router';
 
 const router = Router();
 
 router.use('/questions', questionRouter);
+router.use('/exams', examRouter);
 
 router.get('/me', userController.getMe.bind(userController));
 router.get('/list', userController.index.bind(userController));

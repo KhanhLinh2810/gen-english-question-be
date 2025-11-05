@@ -58,8 +58,8 @@ export class Users extends Model<
         timestamps: true,
         // paranoid: true,
         underscored: true,
-        // created_at: 'created_at',
-        // updated_at: 'updated_at',
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
         name: {
           singular: 'user',
           plural: 'users',
