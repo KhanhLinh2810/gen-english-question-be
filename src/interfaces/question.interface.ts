@@ -1,3 +1,5 @@
+import { QuestionType } from '../enums';
+
 export interface IFilterQuestion {
   content?: string;
   tag?: string;
@@ -15,6 +17,7 @@ export interface ICreateQuestion {
   content: string;
   description: string;
   score: number;
+  type: QuestionType;
   tags: string;
   by_ai: boolean;
   choices: ICreateChoice[];
@@ -28,6 +31,7 @@ export interface IUpdateQuestion {
   content: string;
   description: string;
   score: number;
+  type: QuestionType;
   tags: string;
   by_ai: boolean;
   choices: IUpdateChoice[];

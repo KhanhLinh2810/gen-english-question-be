@@ -8,6 +8,7 @@ export class QuestionDTO {
   public content: string;
   public description?: string;
   public score: number;
+  public type: number;
   public tags?: string;
   public created_at: Date;
   public updated_at: Date;
@@ -21,6 +22,7 @@ export class QuestionDTO {
     this.content = question.content;
     this.description = question.description;
     this.score = question.score;
+    this.type = question.type;
     this.tags = question.tags ?? undefined;
     this.created_at = question.created_at;
     this.updated_at = question.updated_at;

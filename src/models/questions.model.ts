@@ -13,6 +13,7 @@ import {
 } from 'sequelize';
 import { Choices } from './choices.model';
 import { Users } from './users.model';
+import { QuestionType } from '../enums';
 
 interface QuestionsCreationAttributes
   extends Optional<InferCreationAttributes<Questions>, 'id'> {
@@ -27,6 +28,7 @@ export class Questions extends Model<
   declare content: string;
   declare description: string;
   declare score: number;
+  declare type: QuestionType;
   declare tags?: string | null;
   declare creator_id?: number | null;
   declare created_at: CreationOptional<Date>;
@@ -66,7 +68,11 @@ export class Questions extends Model<
         },
         score: {
           type: DataTypes.INTEGER,
-          defaultValue: 0,
+          defaultValue: 1,
+        },
+        type: {
+          type: DataTypes.INTEGER,
+          defaultValue: 1,
         },
         tags: {
           type: DataTypes.STRING,
