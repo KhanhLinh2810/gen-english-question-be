@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from 'express';
 import _ from 'lodash';
 import { BAD_REQUEST, RESPONSE_SUCCESS } from '../constants/constants';
 import { CustomRequest, IFilterExam } from '../interfaces';
-import { db } from '../loaders/database.loader';
 import { ExamService } from '../services';
 import { AppError } from '../utility/appError.util';
 import { resOK } from '../utility/HttpException';
@@ -81,7 +80,6 @@ export class ExamController {
   }
 
   async update(req: Request, res: Response, next: NextFunction) {
-    const transaction = await db.sequalize.transaction();
     try {
       const user = (req as CustomRequest).user;
       if (!user) {
@@ -103,12 +101,9 @@ export class ExamController {
           ),
         },
         user.id,
-        transaction,
       );
-      await transaction.commit();
       return res.status(RESPONSE_SUCCESS).json(resOK(exam));
     } catch (e) {
-      await transaction.rollback();
       next(e);
     }
   }
