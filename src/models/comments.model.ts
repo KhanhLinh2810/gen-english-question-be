@@ -51,7 +51,7 @@ export class Comments extends Model<
         },
         user_id: {
           type: DataTypes.INTEGER,
-          allowNull: true,
+          allowNull: false,
         },
         content: {
           type: DataTypes.TEXT,

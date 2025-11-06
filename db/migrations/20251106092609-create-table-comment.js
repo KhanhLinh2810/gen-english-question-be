@@ -21,7 +21,7 @@ module.exports = {
         allowNull: true,
         references: { model: 'users', key: 'id' },
         onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
+        onDelete: 'CASCADE',
       },
     content: {
         type: Sequelize.TEXT,
