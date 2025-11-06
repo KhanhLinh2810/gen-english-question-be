@@ -83,6 +83,7 @@ export class ExamAttemptService {
           model: Exams,
           as: 'exam',
           attributes: [
+            'lastest_start_time',
             'total_question',
             'list_question',
             'title',
@@ -96,61 +97,33 @@ export class ExamAttemptService {
     });
   }
 
-  async detailExam(id: number) {
-    const exam_attempt = await this.findOrFail(id);
+  async detailExam(exam_id: number, user_id: number) {
+    const exam_attempt = await this.findOrFail(exam_id, user_id);
     this.checkExamNotClosed(exam_attempt);
 
-    const map_question_to_choice = this.buildQuestionChoiceMap(
-        exam_attempt.list_answer,
-      ),
-      map_question_to_order = this.buildQuestionOrderMap(
-        exam_attempt.list_answer,
-      ),
-      map_question_to_score = this.buildQuestionScoreMap(
-        exam_attempt.exam.list_question,
-      );
+    return await this.buildExamDetail(exam_attempt, false);
+  }
 
-    const list_question_id = exam_attempt.exam.list_question.map(
-      (q) => q.question_id,
-    );
-    const list_question_db = await Questions.findAll({
-      where: { id: { [Op.in]: list_question_id } },
-      include: [
-        {
-          model: Choices,
-          as: 'choices',
-          attributes: ['id', 'content', 'is_correct'],
-        },
-      ],
-      attributes: ['id', 'content', 'description', 'type'],
-    });
+  async detailAfterSubmit(id: number, user_id: number) {
+    const exam_attempt = await this.findOrFail(id);
+    if (
+      user_id !== exam_attempt.user_id &&
+      user_id != exam_attempt.exam.creator_id
+    ) {
+      throw new AppError(BAD_REQUEST, 'exam_attempt_unauthorized_access');
+    }
+    if (
+      user_id !== exam_attempt.exam.creator_id &&
+      exam_attempt.exam.lastest_start_time
+    ) {
+      const now = new Date();
+      const lastest_start_time = new Date(exam_attempt.exam.lastest_start_time);
+      if (now.getTime() < lastest_start_time.getTime()) {
+        throw new AppError(BAD_REQUEST, 'access_blocked_until_end');
+      }
+    }
 
-    const list_question = list_question_db.map((q) => ({
-      id: q.id,
-      content: q.content,
-      description: q.description,
-      type: q.type,
-      score: map_question_to_score.get(q.id),
-      order: map_question_to_order.get(q.id),
-      choices: q.choices.map((choice) => ({
-        id: choice.id,
-        content: choice.content,
-        is_selected:
-          map_question_to_choice.get(q.id)?.includes(choice.id) ?? false,
-      })),
-    }));
-
-    return {
-      ..._.pick(exam_attempt, [
-        'id',
-        'exam_id',
-        'user_id',
-        'started_at',
-        'duration',
-      ]),
-      exam: _.pick(exam_attempt.exam, ['title', 'note', 'id']),
-      list_question,
-    };
+    return await this.buildExamDetail(exam_attempt, true);
   }
 
   async getOnGoingExam(data: ICreateExamAttempt, user_id: number) {
@@ -304,6 +277,64 @@ export class ExamAttemptService {
       map.set(question_id, score);
     }
     return map;
+  }
+
+  private async buildExamDetail(
+    exam_attempt: ExamAttempts,
+    after_submit: boolean,
+  ) {
+    const map_question_to_choice = this.buildQuestionChoiceMap(
+        exam_attempt.list_answer,
+      ),
+      map_question_to_order = this.buildQuestionOrderMap(
+        exam_attempt.list_answer,
+      ),
+      map_question_to_score = this.buildQuestionScoreMap(
+        exam_attempt.exam.list_question,
+      );
+
+    const list_question_id = exam_attempt.exam.list_question.map(
+      (q) => q.question_id,
+    );
+    const list_question_db = await Questions.findAll({
+      where: { id: { [Op.in]: list_question_id } },
+      include: [
+        {
+          model: Choices,
+          as: 'choices',
+          attributes: ['id', 'content', 'is_correct'],
+        },
+      ],
+      attributes: ['id', 'content', 'description', 'type'],
+    });
+
+    const list_question = list_question_db.map((q) => ({
+      id: q.id,
+      content: q.content,
+      description: q.description,
+      type: q.type,
+      score: map_question_to_score.get(q.id),
+      order: map_question_to_order.get(q.id),
+      choices: q.choices.map((choice) => ({
+        id: choice.id,
+        content: choice.content,
+        is_selected:
+          map_question_to_choice.get(q.id)?.includes(choice.id) ?? false,
+        ...(after_submit ? { is_correct: choice.is_correct } : {}),
+      })),
+    }));
+
+    return {
+      ..._.pick(exam_attempt, [
+        'id',
+        'exam_id',
+        'user_id',
+        'started_at',
+        'duration',
+      ]),
+      exam: _.pick(exam_attempt.exam, ['title', 'note', 'id']),
+      list_question,
+    };
   }
 
   // other

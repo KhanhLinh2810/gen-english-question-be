@@ -54,6 +54,23 @@ export class ExamAttemptController {
     }
   }
 
+  async detail(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = (req as CustomRequest).user;
+      if (!user) {
+        throw new AppError(BAD_REQUEST, 'user_not_found');
+      }
+      const exam_attempt_id = _.toSafeInteger(req.params.id);
+      const data = await this.examAttemptService.detailAfterSubmit(
+        exam_attempt_id,
+        user.id,
+      );
+      return res.status(RESPONSE_SUCCESS).json(resOK(data));
+    } catch (e) {
+      next(e);
+    }
+  }
+
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const user = (req as CustomRequest).user;
