@@ -31,6 +31,7 @@ export class ExamAttempts extends Model<
   declare id: CreationOptional<number>;
   declare exam_id: number;
   declare user_id: number;
+  declare job_schedule_id: CreationOptional<string>;
   declare started_at: Date;
   declare finished_at?: Date | null;
   declare duration: number;
@@ -75,6 +76,10 @@ export class ExamAttempts extends Model<
         user_id: {
           type: DataTypes.INTEGER,
           allowNull: false,
+        },
+        job_schedule_id: {
+          type: DataTypes.STRING,
+          allowNull: true,
         },
         started_at: {
           type: DataTypes.DATE,

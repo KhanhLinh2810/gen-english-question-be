@@ -1,7 +1,7 @@
 export interface IAnswerInExamAttempt {
   question_id: number;
   order: number;
-  choice_id?: string;
+  choice_id?: number;
 }
 
 export interface ICreateExamAttempt {
