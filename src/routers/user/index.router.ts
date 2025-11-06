@@ -4,11 +4,11 @@ import { validateBody } from '../../middleware/validation.middleware';
 import { uploadImage } from '../../utility/media.util';
 import { updatePasswordUserSchema, updateUserSchema } from '../../validators';
 import questionRouter from './question.router';
-
+import ratingRouter from './rating.router';
 const router = Router();
 
 router.use('/questions', questionRouter);
-
+router.use('/ratings', ratingRouter)
 router.get('/me', userController.getMe.bind(userController));
 router.get('/list', userController.index.bind(userController));
 router.get('/:id', userController.detail.bind(userController));
