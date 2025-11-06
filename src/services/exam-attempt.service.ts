@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { CreationAttributes, Op, Transaction } from 'sequelize';
-import { BAD_REQUEST } from '../constants/constants';
+import { BAD_REQUEST, SCHEDULE_JOB_NAME } from '../constants/constants';
 import {
   IAnswerInExamAttempt,
   ICreateExamAttempt,
@@ -11,6 +11,7 @@ import {
 import { Choices, ExamAttempts, Exams, Questions, Users } from '../models';
 import { AppError } from '../utility/appError.util';
 import { areArraysEqual, escapeForILike } from '../utility/utils';
+import { ScheduleService } from '../modules';
 
 export class ExamAttemptService {
   private static instance: ExamAttemptService;
@@ -27,7 +28,18 @@ export class ExamAttemptService {
     data: CreationAttributes<ExamAttempts>,
     transaction?: Transaction,
   ) {
-    return await ExamAttempts.create(data, { transaction });
+    const exam_attempt = await ExamAttempts.create(data, { transaction });
+    const scheduleService = ScheduleService.getInstance();
+    const job = await scheduleService.addJob(
+      SCHEDULE_JOB_NAME.SUBMIT_EXAM,
+      { id: exam_attempt.id },
+      {
+        delay: exam_attempt.duration * 60000,
+        removeOnComplete: true,
+      },
+    );
+    await exam_attempt.update({ job_schedule_id: job.id }, { transaction });
+    return exam_attempt;
   }
 
   // get many
@@ -141,6 +153,13 @@ export class ExamAttemptService {
     };
   }
 
+  async getOnGoingExam(data: ICreateExamAttempt, user_id: number) {
+    return await ExamAttempts.findOne({
+      where: { user_id, exam_id: data.exam_id, finished_at: null },
+      attributes: ['id'],
+    });
+  }
+
   // find or fail
   async findOrFail(
     exam_attempt_id: number,
@@ -192,80 +211,35 @@ export class ExamAttemptService {
   ) {
     const finished_at = new Date();
     // save answer
-    const exam_attempt = await this.saveAnswer(
+    const exam_attempt_db = await this.saveAnswer(
       data,
       exam_attempt_id,
       user_id,
       transaction,
     );
 
-    const map_question_to_choice = this.buildQuestionChoiceMap(
-        exam_attempt.list_answer,
-      ),
-      map_question_to_score = this.buildQuestionScoreMap(
-        exam_attempt.exam.list_question,
-      );
-
-    const list_question_id = exam_attempt.exam.list_question.map(
-      (q) => q.question_id,
-    );
-    const list_question = await Questions.findAll({
-      where: { id: { [Op.in]: list_question_id } },
-      include: [
-        {
-          model: Choices,
-          as: 'choices',
-          attributes: ['is_correct', 'id'],
-          where: {
-            is_correct: true,
-          },
-        },
-      ],
-      attributes: ['id'],
-    });
-
-    let correct_question = 0,
-      wrong_question = 0,
-      score = 0;
-
-    for (const question of list_question) {
-      const list_correct_choice_id = question.choices.map(
-        (choice) => choice.id,
-      );
-      const list_selected_choice_id =
-        map_question_to_choice.get(question.id) ?? [];
-      if (
-        list_selected_choice_id.length === 0 ||
-        list_correct_choice_id.length === 0
-      )
-        continue;
-      if (areArraysEqual(list_correct_choice_id, list_selected_choice_id)) {
-        correct_question++;
-        score += map_question_to_score.get(question.id) ?? question.score;
-      } else {
-        wrong_question++;
-      }
-    }
-
-    exam_attempt.set({
-      total_question: list_question.length,
-      finished_at,
-      correct_question,
-      wrong_question,
-      score,
-    });
-    await exam_attempt.save({ transaction });
+    exam_attempt_db.set({ finished_at });
+    const exam_attempt = await this.gradingExam(exam_attempt_db, transaction);
     return {
       ...exam_attempt.dataValues,
       exam: _.pick(exam_attempt.exam, ['title', 'note', 'id']),
     };
   }
 
+  async submitBySystem(exam_attempt_id: number) {
+    const finished_at = new Date();
+    const exam_attempt = await this.findOrFail(exam_attempt_id, undefined);
+    this.checkExamNotClosed(exam_attempt);
+
+    exam_attempt.set({ finished_at });
+    await this.gradingExam(exam_attempt);
+  }
+
   // validate
   private checkExamNotClosed(exam_attempt: ExamAttempts) {
     const now = new Date();
     const expireTime = new Date(exam_attempt.started_at);
-    expireTime.setMinutes(expireTime.getMinutes() + exam_attempt.duration);
+    expireTime.setMinutes(expireTime.getMinutes() + exam_attempt.duration + 1);
 
     if (exam_attempt.finished_at || now > expireTime) {
       throw new AppError(BAD_REQUEST, 'exam_submission_closed');
@@ -301,7 +275,6 @@ export class ExamAttemptService {
     return { query, is_required };
   }
 
-  /** Helper: map question_id -> choice */
   private buildQuestionChoiceMap(
     list_answer: { question_id: number; choice_id?: number }[] = [],
   ) {
@@ -313,7 +286,6 @@ export class ExamAttemptService {
     return map;
   }
 
-  /** Helper: map question_id -> order */
   private buildQuestionOrderMap(
     list_answer: { question_id: number; order: number }[] = [],
   ) {
@@ -324,7 +296,6 @@ export class ExamAttemptService {
     return map;
   }
 
-  /** Helper: map question_id -> score */
   private buildQuestionScoreMap(
     list_question: { question_id: number; score: number }[] = [],
   ) {
@@ -418,5 +389,64 @@ export class ExamAttemptService {
         note: exam.note,
       },
     };
+  }
+
+  async gradingExam(exam_attempt: ExamAttempts, transaction?: Transaction) {
+    const map_question_to_choice = this.buildQuestionChoiceMap(
+        exam_attempt.list_answer,
+      ),
+      map_question_to_score = this.buildQuestionScoreMap(
+        exam_attempt.exam.list_question,
+      );
+
+    const list_question_id = exam_attempt.exam.list_question.map(
+      (q) => q.question_id,
+    );
+    const list_question = await Questions.findAll({
+      where: { id: { [Op.in]: list_question_id } },
+      include: [
+        {
+          model: Choices,
+          as: 'choices',
+          attributes: ['is_correct', 'id'],
+          where: {
+            is_correct: true,
+          },
+        },
+      ],
+      attributes: ['id'],
+    });
+
+    let correct_question = 0,
+      wrong_question = 0,
+      score = 0;
+
+    for (const question of list_question) {
+      const list_correct_choice_id = question.choices.map(
+        (choice) => choice.id,
+      );
+      const list_selected_choice_id =
+        map_question_to_choice.get(question.id) ?? [];
+      if (
+        list_selected_choice_id.length === 0 ||
+        list_correct_choice_id.length === 0
+      )
+        continue;
+      if (areArraysEqual(list_correct_choice_id, list_selected_choice_id)) {
+        correct_question++;
+        score += map_question_to_score.get(question.id) ?? question.score;
+      } else {
+        wrong_question++;
+      }
+    }
+
+    exam_attempt.set({
+      total_question: list_question.length,
+      correct_question,
+      wrong_question,
+      score,
+    });
+    await exam_attempt.save({ transaction });
+    return exam_attempt;
   }
 }

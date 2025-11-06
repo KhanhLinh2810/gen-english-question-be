@@ -1,0 +1,57 @@
+import { Queue, Worker, JobsOptions, Job } from 'bullmq';
+import env from '../../../env';
+import { ExamAttemptService } from '../../services';
+
+export class ScheduleService {
+  private static instance: ScheduleService;
+  private queue: Queue;
+  private readonly connection = {
+    host: env.redis.host,
+    port: env.redis.port,
+  };
+
+  private constructor() {
+    this.queue = new Queue('schedule-queue', {
+      connection: this.connection,
+    });
+
+    new Worker(
+      'schedule-queue',
+      async (job: Job) => {
+        switch (job.name) {
+          case 'submit-exam':
+            try {
+              const { exam_attempt_id } = job.data;
+              const examAttemptService = ExamAttemptService.getInstance();
+              await examAttemptService.submitBySystem(exam_attempt_id);
+            } catch (error) {
+              console.error('have error when run submit exam');
+            }
+            break;
+
+          default:
+            break;
+        }
+      },
+      { connection: this.connection },
+    );
+  }
+
+  static getInstance(): ScheduleService {
+    if (!ScheduleService.instance) {
+      ScheduleService.instance = new ScheduleService();
+    }
+    return ScheduleService.instance;
+  }
+
+  async addJob(name: string, data: any = {}, options: JobsOptions = {}) {
+    return await this.queue.add(name, data, options);
+  }
+
+  async deleteJob(jobId: string) {
+    const job = await this.queue.getJob(jobId);
+    if (job) {
+      await job.remove();
+    }
+  }
+}
