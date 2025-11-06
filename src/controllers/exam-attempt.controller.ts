@@ -35,6 +35,16 @@ export class ExamAttemptController {
     }
   }
 
+  async detailExam(req: Request, res: Response, next: NextFunction) {
+    try {
+      const exam_attempt_id = _.toSafeInteger(req.params.id);
+      const data = await this.examAttemptService.detailExam(exam_attempt_id);
+      return res.status(RESPONSE_SUCCESS).json(resOK(data));
+    } catch (e) {
+      next(e);
+    }
+  }
+
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const user = (req as CustomRequest).user;

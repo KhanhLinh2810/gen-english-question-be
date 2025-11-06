@@ -84,6 +84,63 @@ export class ExamAttemptService {
     });
   }
 
+  async detailExam(id: number) {
+    const exam_attempt = await this.findOrFail(id);
+    this.checkExamNotClosed(exam_attempt);
+
+    const map_question_to_choice = this.buildQuestionChoiceMap(
+        exam_attempt.list_answer,
+      ),
+      map_question_to_order = this.buildQuestionOrderMap(
+        exam_attempt.list_answer,
+      ),
+      map_question_to_score = this.buildQuestionScoreMap(
+        exam_attempt.exam.list_question,
+      );
+
+    const list_question_id = exam_attempt.exam.list_question.map(
+      (q) => q.question_id,
+    );
+    const list_question_db = await Questions.findAll({
+      where: { id: { [Op.in]: list_question_id } },
+      include: [
+        {
+          model: Choices,
+          as: 'choices',
+          attributes: ['id', 'content', 'is_correct'],
+        },
+      ],
+      attributes: ['id', 'content', 'description', 'type'],
+    });
+
+    const list_question = list_question_db.map((q) => ({
+      id: q.id,
+      content: q.content,
+      description: q.description,
+      type: q.type,
+      score: map_question_to_score.get(q.id),
+      order: map_question_to_order.get(q.id),
+      choices: q.choices.map((choice) => ({
+        id: choice.id,
+        content: choice.content,
+        is_selected:
+          map_question_to_choice.get(q.id)?.includes(choice.id) ?? false,
+      })),
+    }));
+
+    return {
+      ..._.pick(exam_attempt, [
+        'id',
+        'exam_id',
+        'user_id',
+        'started_at',
+        'duration',
+      ]),
+      exam: _.pick(exam_attempt.exam, ['title', 'note', 'id']),
+      list_question,
+    };
+  }
+
   // find or fail
   async findOrFail(
     exam_attempt_id: number,
@@ -109,28 +166,21 @@ export class ExamAttemptService {
       user_id,
       transaction,
     );
-    const now = new Date();
-    const lastest_finished_at = new Date(exam_attempt.started_at);
-    lastest_finished_at.setMinutes(
-      lastest_finished_at.getMinutes() + exam_attempt.duration,
-    );
+    this.checkExamNotClosed(exam_attempt);
 
-    if (
-      exam_attempt.finished_at ||
-      now.getTime() > lastest_finished_at.getTime()
-    ) {
-      throw new AppError(BAD_REQUEST, 'exam_submission_closed');
-    }
     const map_question_to_choice = new Map();
     data.list_answer.map((answer) =>
       map_question_to_choice.set(answer.question_id, answer.choice_id),
     );
     const list_answer_db = exam_attempt.list_answer.map((answer_db) => {
-      answer_db.choice_id = map_question_to_choice.get(answer_db.question_id);
+      answer_db.choice_id =
+        map_question_to_choice.get(answer_db.question_id) ?? null;
       return answer_db;
     });
     exam_attempt.set({ list_answer: list_answer_db });
+    exam_attempt.changed('list_answer', true);
     await exam_attempt.save({ transaction });
+
     return exam_attempt;
   }
 
@@ -149,26 +199,16 @@ export class ExamAttemptService {
       transaction,
     );
 
-    const map_question_to_choice = new Map();
-    exam_attempt.list_answer.map((answer) => {
-      const question_id = answer.question_id;
+    const map_question_to_choice = this.buildQuestionChoiceMap(
+        exam_attempt.list_answer,
+      ),
+      map_question_to_score = this.buildQuestionScoreMap(
+        exam_attempt.exam.list_question,
+      );
 
-      if (map_question_to_choice.has(question_id)) {
-        const value = [
-          ...map_question_to_choice.get(question_id),
-          answer.choice_id,
-        ];
-        map_question_to_choice.set(question_id, value);
-      } else {
-        map_question_to_choice.set(question_id, [answer.choice_id]);
-      }
-    });
-    // get question db
-    const map_question_to_score = new Map();
-    const list_question_id = exam_attempt.exam.list_question.map((question) => {
-      map_question_to_score.set(question.question_id, question.score);
-      return question.question_id;
-    });
+    const list_question_id = exam_attempt.exam.list_question.map(
+      (q) => q.question_id,
+    );
     const list_question = await Questions.findAll({
       where: { id: { [Op.in]: list_question_id } },
       include: [
@@ -192,12 +232,16 @@ export class ExamAttemptService {
       const list_correct_choice_id = question.choices.map(
         (choice) => choice.id,
       );
-      const list_selected_choice_id = map_question_to_choice.get(question.id);
-      if (list_selected_choice_id.length === 0 || list_correct_choice_id)
+      const list_selected_choice_id =
+        map_question_to_choice.get(question.id) ?? [];
+      if (
+        list_selected_choice_id.length === 0 ||
+        list_correct_choice_id.length === 0
+      )
         continue;
       if (areArraysEqual(list_correct_choice_id, list_selected_choice_id)) {
         correct_question++;
-        score += map_question_to_score.get(question.id);
+        score += map_question_to_score.get(question.id) ?? question.score;
       } else {
         wrong_question++;
       }
@@ -215,6 +259,17 @@ export class ExamAttemptService {
       ...exam_attempt.dataValues,
       exam: _.pick(exam_attempt.exam, ['title', 'note', 'id']),
     };
+  }
+
+  // validate
+  private checkExamNotClosed(exam_attempt: ExamAttempts) {
+    const now = new Date();
+    const expireTime = new Date(exam_attempt.started_at);
+    expireTime.setMinutes(expireTime.getMinutes() + exam_attempt.duration);
+
+    if (exam_attempt.finished_at || now > expireTime) {
+      throw new AppError(BAD_REQUEST, 'exam_submission_closed');
+    }
   }
 
   // helper
@@ -244,6 +299,40 @@ export class ExamAttemptService {
       is_required = true;
     }
     return { query, is_required };
+  }
+
+  /** Helper: map question_id -> choice */
+  private buildQuestionChoiceMap(
+    list_answer: { question_id: number; choice_id?: number }[] = [],
+  ) {
+    const map = new Map<number, number[]>();
+    for (const { question_id, choice_id } of list_answer) {
+      if (!map.has(question_id)) map.set(question_id, []);
+      if (choice_id) map.get(question_id)!.push(choice_id);
+    }
+    return map;
+  }
+
+  /** Helper: map question_id -> order */
+  private buildQuestionOrderMap(
+    list_answer: { question_id: number; order: number }[] = [],
+  ) {
+    const map = new Map<number, number>();
+    for (const { question_id, order } of list_answer) {
+      map.set(question_id, order);
+    }
+    return map;
+  }
+
+  /** Helper: map question_id -> score */
+  private buildQuestionScoreMap(
+    list_question: { question_id: number; score: number }[] = [],
+  ) {
+    const map = new Map<number, number>();
+    for (const { question_id, score } of list_question) {
+      map.set(question_id, score);
+    }
+    return map;
   }
 
   // other

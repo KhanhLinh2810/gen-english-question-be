@@ -26,5 +26,9 @@ router.post(
 );
 
 router.get('/', examAttemptController.index.bind(examAttemptController));
+router.get(
+  '/:id/exams',
+  examAttemptController.detailExam.bind(examAttemptController),
+);
 
 export default router;
