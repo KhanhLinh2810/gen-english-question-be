@@ -1,6 +1,7 @@
 import { Queue, Worker, JobsOptions, Job } from 'bullmq';
 import env from '../../../env';
 import { ExamAttemptService } from '../../services';
+import { SCHEDULE_JOB_NAME } from '../../constants/constants';
 
 export class ScheduleService {
   private static instance: ScheduleService;
@@ -19,13 +20,13 @@ export class ScheduleService {
       'schedule-queue',
       async (job: Job) => {
         switch (job.name) {
-          case 'submit-exam':
+          case SCHEDULE_JOB_NAME.SUBMIT_EXAM:
             try {
-              const { exam_attempt_id } = job.data;
+              const { id } = job.data;
               const examAttemptService = ExamAttemptService.getInstance();
-              await examAttemptService.submitBySystem(exam_attempt_id);
+              await examAttemptService.submitBySystem(id);
             } catch (error) {
-              console.error('have error when run submit exam');
+              console.error('have error when run submit exam', error);
             }
             break;
 

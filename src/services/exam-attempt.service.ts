@@ -34,7 +34,8 @@ export class ExamAttemptService {
       SCHEDULE_JOB_NAME.SUBMIT_EXAM,
       { id: exam_attempt.id },
       {
-        delay: exam_attempt.duration * 60000,
+        delay: 1000,
+        attempts: 3,
         removeOnComplete: true,
       },
     );
