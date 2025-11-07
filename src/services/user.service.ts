@@ -113,7 +113,6 @@ export class UserService {
     email: string,
     excludeUserId?: number,
   ) {
-    console.log(excludeUserId);
     const query = excludeUserId
       ? {
           [Op.or]: [{ username }, { email }],

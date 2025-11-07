@@ -24,7 +24,7 @@ export const handleError = (
         : req.__(error.message),
   };
   if (error instanceof AppError) {
-    responseData.message = req.__(error.message);
+    responseData.message = req.__(error.message) ?? error.message;
     responseData.code = error.code;
     if (error.data) {
       responseData.data = error.data;
