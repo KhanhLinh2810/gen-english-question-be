@@ -6,6 +6,7 @@ export { FileService } from './file.service';
 export { CounterService } from './counter.service';
 export { EmailService } from './email.service';
 export { QuestionService } from './question.service';
+export { CommentService } from './comment.service';
 
 export const addFilterDate = (
   searchQuery: any,

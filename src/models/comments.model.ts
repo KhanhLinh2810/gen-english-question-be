@@ -21,6 +21,7 @@ export class Comments extends Model<
   declare content: string;
   declare created_at: CreationOptional<Date>;
   declare updated_at: CreationOptional<Date>;
+  declare user?: Users | null;
 
   // Associations
   static associate() {
@@ -32,12 +33,12 @@ export class Comments extends Model<
 
     Comments.belongsTo(Users, {
       foreignKey: 'user_id',
-      as: 'creator',
+      as: 'user',
       onDelete: 'SET NULL',
     });
   }
 
-  static initModel(sequelize: Sequelize) {
+  static initClass(sequelize: Sequelize) {
     Comments.init(
       {
         id: {
