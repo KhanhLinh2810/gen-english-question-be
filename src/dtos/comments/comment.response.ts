@@ -29,8 +29,5 @@ export class CommentDTO {
     } else {
       this.user = null;
     }
-
-    delete (comment as any).createdAt;
-    delete (comment as any).updatedAt;
   }
 }

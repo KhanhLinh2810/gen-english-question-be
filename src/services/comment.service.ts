@@ -33,7 +33,7 @@ export class CommentService {
   // get many
   async getMany(filter: IFilterComment, paging: IPagination) {
     const where = this.buildQuery(filter);
-    const { rows, count } = await Comments.findAndCountAll({
+    return await Comments.findAndCountAll({
       where,
       include: [
         {
@@ -45,10 +45,7 @@ export class CommentService {
       limit: paging.limit,
       offset: paging.offset,
       order: [[paging.order_by, paging.sort]],
-      distinct: true,
     });
-
-    return { rows, count };
   }
 
   // get one

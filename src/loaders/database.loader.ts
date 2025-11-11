@@ -80,7 +80,8 @@ Questions.belongsTo(Users, { foreignKey: 'creatorId', as: 'creator' });
 Questions.hasMany(Choices, { foreignKey: 'questionId', as: 'choices' });
 Users.hasMany(Questions, { foreignKey: 'creatorId', as: 'questions' });
 Choices.belongsTo(Questions, { foreignKey: 'questionId', as: 'question' });
-Comments.belongsTo(Users, { foreignKey: 'user_id', as: 'user' });
+
+Comments.associate();
 
 export const db = {
   sequalize: sequelize,

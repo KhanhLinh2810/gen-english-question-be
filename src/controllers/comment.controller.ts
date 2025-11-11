@@ -95,22 +95,31 @@ export class CommentController {
   }
 
   async destroy(req: Request, res: Response, next: NextFunction) {
-    try {
-      const user = (req as CustomRequest).user;
-      if (!user) {
-        throw new AppError(BAD_REQUEST, 'user_not_found');
-      }
-
-      const comment = await this.commentService.findOrFailWithRelations(
-        _.toSafeInteger(req.params.id),
-        user.id,
-      );
-      await comment.destroy();
-      return res.status(RESPONSE_SUCCESS).json(resOK());
-    } catch (e) {
-      next(e);
+  try {
+    const user = (req as CustomRequest).user;
+    if (!user) {
+      throw new AppError(BAD_REQUEST, 'user_not_found');
     }
+
+    const comment = await this.commentService.findByPk(
+      _.toSafeInteger(req.params.id)
+    );
+    
+    if (!comment) {
+      throw new AppError(BAD_REQUEST, 'comment_not_found');
+    }
+
+    if (comment.user_id !== user.id) {
+      throw new AppError(BAD_REQUEST, 'permission_denied');
+    }
+
+    await comment.destroy();
+    return res.status(RESPONSE_SUCCESS).json(resOK());
+  } catch (e) {
+    next(e);
   }
+}
+
 }
 
 export const commentController = new CommentController();

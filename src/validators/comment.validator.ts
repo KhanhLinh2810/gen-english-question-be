@@ -6,9 +6,8 @@ export const createCommentSchema: JSONSchemaType<ICreateComment> = {
   properties: {
     content: { type: "string", minLength: 1 },
     question_id: { type: "integer", minimum: 1 },
-    user_id: { type: "integer", minimum: 1 },
   },
-  required: ["content", "question_id", "user_id"],
+  required: ["content", "question_id"],
   additionalProperties: false,
 };
 
@@ -16,10 +15,9 @@ export const updateCommentSchema: JSONSchemaType<IUpdateComment> = {
   type: "object",
   properties: {
     content: { type: "string", minLength: 1 },
-    user_id: { type: "integer", minimum: 1 },
     question_id: { type: "integer", minimum: 1 },
   },
-  required: ["content", "user_id", "question_id"],
+  required: ["content", "question_id"],
   additionalProperties: false,
 };
 

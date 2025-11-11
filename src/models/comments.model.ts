@@ -34,7 +34,7 @@ export class Comments extends Model<
     Comments.belongsTo(Users, {
       foreignKey: 'user_id',
       as: 'user',
-      onDelete: 'SET NULL',
+      onDelete: 'CASCADE',
     });
   }
 
@@ -72,6 +72,8 @@ export class Comments extends Model<
       {
         sequelize,
         tableName: 'comments',
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
         timestamps: true,
         underscored: true,
       },
