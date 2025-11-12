@@ -54,6 +54,19 @@ export class CommentService {
   }
 
   // find or fail
+  async findOrFail(
+    id: number,
+    user_id?: number,
+    transaction?: Transaction,
+  ) {
+    const comment = await Comments.findByPk(id, {transaction});
+    if (!comment || (user_id && comment.user_id !== user_id)) {
+      throw new AppError(BAD_REQUEST, 'comment_not_found');
+    }
+    return comment;
+  }
+
+  // find or fail with relations
   async findOrFailWithRelations(
     id: number,
     user_id?: number,
@@ -82,7 +95,7 @@ export class CommentService {
     user_id: number,
     transaction: Transaction,
   ) {
-    const comment = await this.findOrFailWithRelations(id, user_id);
+    const comment = await this.findOrFail(id, user_id, transaction);
     await comment.update(data, { transaction });
 
     return comment;

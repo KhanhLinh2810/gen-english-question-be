@@ -38,7 +38,7 @@ export class CommentController {
 
   async detail(req: Request, res: Response, next: NextFunction) {
     try {
-      const comment = await this.commentService.findByPk(
+      const comment = await this.commentService.findOrFail(
         _.toSafeInteger(req.params.id),
       );
       if (!comment) {
@@ -101,7 +101,7 @@ export class CommentController {
       throw new AppError(BAD_REQUEST, 'user_not_found');
     }
 
-    const comment = await this.commentService.findOrFailWithRelations(
+    const comment = await this.commentService.findOrFail(
       _.toSafeInteger(req.params.id),
       user.id,
     );
