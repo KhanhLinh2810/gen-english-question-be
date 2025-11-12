@@ -7,6 +7,9 @@ export { CounterService } from './counter.service';
 export { EmailService } from './email.service';
 export { QuestionService } from './question.service';
 export { CommentService } from './comment.service';
+export { RatingService } from './rating.service';
+export { ExamService } from './exam.service';
+export { ExamAttemptService } from './exam-attempt.service';
 
 export const addFilterDate = (
   searchQuery: any,

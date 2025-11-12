@@ -38,7 +38,7 @@ export class QuestionService {
   // get many
   async getMany(filter: IFilterQuestion, paging: IPagination) {
     const where = this.buildQuery(filter);
-    const { rows, count } = await Questions.findAndCountAll({
+    return await Questions.findAndCountAll({
       where,
       include: [
         {
@@ -53,8 +53,6 @@ export class QuestionService {
       order: [[paging.order_by, paging.sort]],
       distinct: true,
     });
-
-    return { rows, count };
   }
 
   // get one
@@ -187,10 +185,10 @@ export class QuestionService {
   private buildQuery(filter: IFilterQuestion) {
     const query: any = {};
     if (filter.content) {
-      query.content = { [Op.iLike]: `%${filter.content}%` };
+      query.content = { [Op.like]: `%${filter.content}%` };
     }
     if (filter.tag) {
-      query.tags = { [Op.iLike]: `%${filter.tag}%` };
+      query.tags = { [Op.like]: `%${filter.tag}%` };
     }
     if (filter.user_id) {
       query.creator_id = filter.user_id;

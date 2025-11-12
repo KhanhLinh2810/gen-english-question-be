@@ -28,19 +28,13 @@ const PATTERN = {
   DECIMAL: '^[0-9]+(\\.[0-9]{1,2})?$',
   AMOUNT: '^(0|[1-9][0-9]*)$',
   DATE: '^\\d{4}-\\d{2}-\\d{2}$',
+  EMAIL: '/^[^s@]+@[^s@]+.[^s@]+$/',
   ZIP_CODE: '^[0-9]{3}-[0-9]{4}$|^[0-9]{7}$',
+  DATE_ISO_8601: '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$',
 };
 
-const CURRENCY_DEFAULT = 'JPY';
-
-const MESS_ERROR_PAYMENT = {
-  MAX_AMOUNT_OF_PLAN: () =>
-    `${MAX_AMOUNT_PAYMENT.string}円以下のプランのみは決済可能です。`,
-};
-
-const MAX_AMOUNT_PAYMENT = {
-  number: 99999999,
-  string: '99,999,999',
+const SCHEDULE_JOB_NAME = {
+  SUBMIT_EXAM: 'submit-exam',
 };
 
 export {
@@ -61,7 +55,5 @@ export {
   CUSTOMER_CODE_NUM_LEN,
   TIMEZONE_DEFAULT,
   PATTERN,
-  CURRENCY_DEFAULT,
-  MESS_ERROR_PAYMENT,
-  MAX_AMOUNT_PAYMENT,
+  SCHEDULE_JOB_NAME,
 };

@@ -6,25 +6,27 @@ import { UserDTO } from '../users/user.response';
 export class QuestionDTO {
   public id: number;
   public content: string;
-  public description?: string | null;
+  public description?: string;
   public score: number;
-  public tags?: string | null;
+  public type: number;
+  public tags?: string;
   public created_at: Date;
   public updated_at: Date;
 
-  public creator_id?: number | null;
-  public creator?: Creator | null;
-  public choices?: ChoiceDTO[] | null;
+  public creator_id?: number;
+  public creator?: Creator;
+  public choices?: ChoiceDTO[];
 
   constructor(question: Questions, user?: UserDTO) {
     this.id = question.id;
     this.content = question.content;
     this.description = question.description;
     this.score = question.score;
-    this.tags = question.tags;
+    this.type = question.type;
+    this.tags = question.tags ?? undefined;
     this.created_at = question.created_at;
     this.updated_at = question.updated_at;
-    this.creator_id = question.creator_id;
+    this.creator_id = question.creator_id ?? undefined;
 
     if (question.creator) {
       this.creator = {
@@ -40,11 +42,11 @@ export class QuestionDTO {
         email: user.email,
         avatar_url: user.avatar_url,
       };
-    } else this.creator = null;
+    }
 
     this.choices = question.choices
-      ? (question.choices as Choices[]).map((opt) => new ChoiceDTO(opt))
-      : null;
+      ? question.choices.map((opt) => new ChoiceDTO(opt))
+      : undefined;
   }
 }
 

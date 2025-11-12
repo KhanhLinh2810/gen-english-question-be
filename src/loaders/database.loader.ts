@@ -1,6 +1,17 @@
 import { Dialect, Sequelize } from 'sequelize';
 import env from '../../env';
-import { Choices, Counter, File, Questions, Users, UserSearchModel, Comments } from '../models';
+import {
+  Choices,
+  Counter,
+  ExamAttempts,
+  Exams,
+  File,
+  Questions,
+  Users,
+  UserSearchModel,
+  Ratings,
+  Comments
+} from '../models';
 
 const dbConfig = env.database;
 
@@ -75,12 +86,17 @@ File.initClass(sequelize);
 Questions.initClass(sequelize);
 Choices.initClass(sequelize);
 Comments.initClass(sequelize);
+Ratings.initClass(sequelize);
 
-Questions.belongsTo(Users, { foreignKey: 'creatorId', as: 'creator' });
-Questions.hasMany(Choices, { foreignKey: 'questionId', as: 'choices' });
 Users.hasMany(Questions, { foreignKey: 'creatorId', as: 'questions' });
-Choices.belongsTo(Questions, { foreignKey: 'questionId', as: 'question' });
+Exams.initClass(sequelize);
+ExamAttempts.initClass(sequelize);
 
+Questions.associate?.();
+Choices.associate?.();
+Exams.associate?.();
+ExamAttempts.associate?.();
+Ratings.associate();
 Comments.associate();
 
 export const db = {
