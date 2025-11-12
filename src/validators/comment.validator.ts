@@ -21,13 +21,3 @@ export const updateCommentSchema: JSONSchemaType<IUpdateComment> = {
   additionalProperties: false,
 };
 
-export const filterCommentSchema: JSONSchemaType<IFilterComment> = {
-  type: "object",
-  properties: {
-    content: { type: "string", minLength: 1, nullable: true },
-    user_id: { type: "integer", minimum: 1, nullable: true },
-    question_id: { type: "integer", minimum: 1, nullable: true },
-    },
-  required: [],
-  additionalProperties: false,
-};

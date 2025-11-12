@@ -61,7 +61,7 @@ export class CommentController {
 
       const comment = await this.commentService.create({
         ...data,
-        creator_id: user.id,
+        user_id: user.id,
       });
 
       return res
@@ -101,17 +101,10 @@ export class CommentController {
       throw new AppError(BAD_REQUEST, 'user_not_found');
     }
 
-    const comment = await this.commentService.findByPk(
-      _.toSafeInteger(req.params.id)
+    const comment = await this.commentService.findOrFailWithRelations(
+      _.toSafeInteger(req.params.id),
+      user.id,
     );
-    
-    if (!comment) {
-      throw new AppError(BAD_REQUEST, 'comment_not_found');
-    }
-
-    if (comment.user_id !== user.id) {
-      throw new AppError(BAD_REQUEST, 'permission_denied');
-    }
 
     await comment.destroy();
     return res.status(RESPONSE_SUCCESS).json(resOK());
