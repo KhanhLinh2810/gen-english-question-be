@@ -1,9 +1,7 @@
 import {
-  Association,
   CreationAttributes,
   CreationOptional,
   DataTypes,
-  ForeignKey,
   InferAttributes,
   InferCreationAttributes,
   Model,
@@ -11,6 +9,7 @@ import {
   Optional,
   Sequelize,
 } from 'sequelize';
+import { QuestionType } from '../enums';
 import { Choices } from './choices.model';
 import { Users } from './users.model';
 
@@ -27,8 +26,9 @@ export class Questions extends Model<
   declare content: string;
   declare description: string;
   declare score: number;
+  declare type: QuestionType;
   declare tags?: string | null;
-  declare creator_id: ForeignKey<Users['id']>;
+  declare creator_id?: number | null;
   declare created_at: CreationOptional<Date>;
   declare updated_at: CreationOptional<Date>;
 
@@ -37,12 +37,12 @@ export class Questions extends Model<
 
   static associate = () => {
     Questions.hasMany(Choices, {
-      foreignKey: 'questionId',
+      foreignKey: 'question_id',
       as: 'choices',
     });
 
     Questions.belongsTo(Users, {
-      foreignKey: 'userId',
+      foreignKey: 'creator_id',
       as: 'creator',
       onDelete: 'SET NULL',
     });
@@ -66,7 +66,11 @@ export class Questions extends Model<
         },
         score: {
           type: DataTypes.INTEGER,
-          defaultValue: 0,
+          defaultValue: 1,
+        },
+        type: {
+          type: DataTypes.INTEGER,
+          defaultValue: 1,
         },
         tags: {
           type: DataTypes.STRING,
@@ -83,6 +87,8 @@ export class Questions extends Model<
         sequelize,
         tableName: 'questions',
         timestamps: true,
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
         underscored: true,
       },
     );

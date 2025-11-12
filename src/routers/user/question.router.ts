@@ -5,7 +5,7 @@ import {
   createListQuestionSchema,
   createQuestionSchema,
   updateQuestionSchema,
-} from '../../validators/question.validator';
+} from '../../validators';
 
 const router = Router();
 
