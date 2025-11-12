@@ -6,12 +6,16 @@ import { updatePasswordUserSchema, updateUserSchema } from '../../validators';
 import examAttemptRouter from './exam-attempt.router';
 import examRouter from './exam.router';
 import questionRouter from './question.router';
+import commentRouter from './comment.router';
+
 import ratingRouter from './rating.router';
 const router = Router();
 
 router.use('/exams', examRouter);
 router.use('/exam-attempts', examAttemptRouter);
 router.use('/questions', questionRouter);
+router.use('/comments', commentRouter);
+
 router.use('/ratings', ratingRouter)
 router.get('/me', userController.getMe.bind(userController));
 router.get('/list', userController.index.bind(userController));
