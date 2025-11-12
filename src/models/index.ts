@@ -4,5 +4,7 @@ export * from './counter.model';
 export * from './file.model';
 export * from './questions.model';
 export * from './choices.model';
+
+export * from './ratings.model'
 export * from './exams.model';
 export * from './exam-attempt.model';

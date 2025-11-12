@@ -9,6 +9,7 @@ import {
   Questions,
   Users,
   UserSearchModel,
+  Ratings
 } from '../models';
 
 const dbConfig = env.database;
@@ -83,6 +84,9 @@ Counter.initClass(sequelize);
 File.initClass(sequelize);
 Questions.initClass(sequelize);
 Choices.initClass(sequelize);
+Ratings.initClass(sequelize);
+
+Users.hasMany(Questions, { foreignKey: 'creatorId', as: 'questions' });
 Exams.initClass(sequelize);
 ExamAttempts.initClass(sequelize);
 
@@ -90,6 +94,7 @@ Questions.associate?.();
 Choices.associate?.();
 Exams.associate?.();
 ExamAttempts.associate?.();
+Ratings.associate();
 
 export const db = {
   sequalize: sequelize,

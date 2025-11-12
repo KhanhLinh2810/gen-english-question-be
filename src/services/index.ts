@@ -6,6 +6,7 @@ export { FileService } from './file.service';
 export { CounterService } from './counter.service';
 export { EmailService } from './email.service';
 export { QuestionService } from './question.service';
+export { RatingService } from './rating.service';
 export { ExamService } from './exam.service';
 export { ExamAttemptService } from './exam-attempt.service';
 
