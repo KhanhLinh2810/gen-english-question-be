@@ -79,158 +79,157 @@ export function translateErrorMessages(
 ) {
   if (!t) t = i18n.__;
   if (!(errors && errors.length)) return;
+
   for (const e of errors) {
     if (e.keyword === 'errorMessage') continue;
     let out;
     let params: { [key: string]: any } = {};
+
     switch (e.keyword) {
       case 'additionalItems':
       case 'items':
-        out = '';
-        var n = e.params.limit;
-        out += 'は' + n + '以上あってはいけない';
+        out = `không được có nhiều hơn ${e.params.limit} mục`;
         break;
+
       case 'additionalProperties':
-        out = '追加してはいけない';
+        out = 'Không được chứa thuộc tính không hợp lệ';
         break;
+
       case 'anyOf':
-        out = '"anyOf"のスキーマとマッチしなくてはいけない';
+        out = 'Giá trị phải khớp với ít nhất một trong các điều kiện "anyOf"';
         break;
+
       case 'const':
-        out = 'must be equal to constant';
+        out = 'Giá trị phải bằng với hằng số cho trước';
         break;
+
       case 'contains':
-        out = 'must contain a valid item';
+        out = 'Danh sách phải chứa một mục hợp lệ';
         break;
+
       case 'dependencies':
       case 'dependentRequired':
-        out = '' + e.params.property + 'がある場合、';
-        var n = e.params.depsCount;
-        out += 'は' + e.params.deps + 'をつけなければいけない';
+        out = `Khi có thuộc tính "${e.params.property}", phải có thêm ${e.params.deps}`;
         break;
+
       case 'discriminator':
         switch (e.params.error) {
           case 'tag':
-            out = 'tag "' + e.params.tag + '" must be string';
+            out = `Tag "${e.params.tag}" phải là chuỗi`;
             break;
           case 'mapping':
-            out = 'value of tag "' + e.params.tag + '" must be in oneOf';
+            out = `Giá trị của tag "${e.params.tag}" phải thuộc oneOf`;
             break;
           default:
-            out = 'must pass "' + e.keyword + '" keyword validation';
+            out = `Không hợp lệ theo từ khóa "${e.keyword}"`;
         }
         break;
+
       case 'enum':
-        out = '事前に定義された値のいずれかに等しくなければいけない';
+        out = 'Giá trị phải là một trong các giá trị được định nghĩa trước';
         break;
+
       case 'false schema':
-        out = 'boolean schema is false';
+        out = 'Schema boolean là false, giá trị không hợp lệ';
         break;
+
       case 'format':
-        out = '"' + e.params.format + '"形式に揃えなければいけない';
+        out = `Giá trị phải đúng theo định dạng "${e.params.format}"`;
         break;
+
       case 'formatMaximum':
       case 'formatExclusiveMaximum':
-        out = '';
-        var cond = e.params.comparison + ' ' + e.params.limit;
-        out += 'must be ' + cond;
+        out = `Giá trị phải ${e.params.comparison} ${e.params.limit}`;
         break;
+
       case 'formatMinimum':
       case 'formatExclusiveMinimum':
-        out = '';
-        var cond = e.params.comparison + ' ' + e.params.limit;
-        out += 'must be ' + cond;
+        out = `Giá trị phải ${e.params.comparison} ${e.params.limit}`;
         break;
+
       case 'if':
-        out = 'must match "' + e.params.failingKeyword + '" schema';
+        out = `Giá trị phải khớp với schema "${e.params.failingKeyword}"`;
         break;
+
       case 'maximum':
       case 'exclusiveMaximum':
-        out = '';
-        var cond = e.params.comparison + ' ' + e.params.limit;
-        out += cond + 'でなければいけない';
+        out = `Giá trị phải ${e.params.comparison} ${e.params.limit}`;
         break;
-      case 'maxItems':
-        out = '';
-        var n = e.params.limit;
-        out += 'は' + n + '個以上であってはいけない';
-        break;
-      case 'minLength':
 
+      case 'maxItems':
+        out = `Danh sách không được có hơn ${e.params.limit} mục`;
+        break;
+
+      case 'minLength':
       case 'maxLength':
         params = { limit: e.params.limit };
         break;
+
       case 'maxProperties':
-        out = '';
-        var n = e.params.limit;
-        out += 'は' + n + '個以上のプロパティを有してはいけない';
+        out = `Không được có hơn ${e.params.limit} thuộc tính`;
         break;
+
       case 'minimum':
       case 'exclusiveMinimum':
-        out = '';
-        var cond = e.params.comparison + ' ' + e.params.limit;
-        out += cond + 'でなければいけない';
+        out = `Giá trị phải ${e.params.comparison} ${e.params.limit}`;
         break;
+
       case 'minItems':
-        out = '';
-        var n = e.params.limit;
-        out += 'は' + n + '個以下であってはいけない';
+        out = `Danh sách phải có ít nhất ${e.params.limit} mục`;
         break;
+
       case 'minProperties':
-        out = '';
-        var n = e.params.limit;
-        out += 'は' + n + '個以下のプロパティを有してはいけない';
+        out = `Đối tượng phải có ít nhất ${e.params.limit} thuộc tính`;
         break;
+
       case 'multipleOf':
-        out = '' + e.params.multipleOf + 'の倍数でなければいけない';
+        out = `Giá trị phải là bội số của ${e.params.multipleOf}`;
         break;
+
       case 'not':
-        out = '"not"のスキーマに従って有効としてはいけない';
+        out = 'Giá trị không được khớp với schema "not"';
         break;
+
       case 'oneOf':
-        out = '"oneOf"のスキーマと完全に一致しなくてはいけない';
+        out = 'Giá trị phải khớp duy nhất với một schema trong "oneOf"';
         break;
+
       case 'pattern':
-        out = '"' + e.params.pattern + '"のパターンと一致しなければいけない';
+        out = `Giá trị phải khớp với mẫu "${e.params.pattern}"`;
         break;
+
       case 'patternRequired':
-        out =
-          'must have property matching pattern "' +
-          e.params.missingPattern +
-          '"';
+        out = `Phải có thuộc tính khớp với mẫu "${e.params.missingPattern}"`;
         break;
+
       case 'propertyNames':
-        out = 'property name is invalid';
+        out = 'Tên thuộc tính không hợp lệ';
         break;
+
       case 'required':
-        out =
-          '必要なプロパティ' + e.params.missingProperty + 'がなければいけない';
+        out = `Thiếu thuộc tính bắt buộc "${e.params.missingProperty}"`;
         break;
+
       case 'type':
-        out = '' + e.params.type + 'でなければいけない';
+        out = `Giá trị phải thuộc kiểu "${e.params.type}"`;
         break;
+
       case 'unevaluatedItems':
-        out = '';
-        var n = e.params.len;
-        out += 'must NOT have more than ' + n + ' item';
-        if (n != 1) {
-          out += 's';
-        }
+        out = `Không được có hơn ${e.params.len} mục chưa được đánh giá`;
         break;
+
       case 'unevaluatedProperties':
-        out = 'must NOT have unevaluated properties';
+        out = 'Không được có thuộc tính chưa được đánh giá';
         break;
+
       case 'uniqueItems':
-        out =
-          '重複するアイテムがあってはいけない（' +
-          e.params.j +
-          'と' +
-          e.params.i +
-          'は同じである）';
+        out = `Danh sách không được chứa mục trùng lặp (vị trí ${e.params.j} và ${e.params.i})`;
         break;
+
       default:
-        out = 'must pass "' + e.keyword + '" keyword validation';
+        out = `Không hợp lệ theo từ khóa "${e.keyword}"`;
     }
+
     e.message = out || t('validation.' + e.keyword, params);
   }
 }

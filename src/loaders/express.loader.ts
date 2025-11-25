@@ -57,7 +57,7 @@ export default (app: express.Application) => {
 
   app.use(i18n.init);
   app.use((req, res, next) => {
-    const preferredLocale = req.headers['accept-language'] || 'ja';
+    const preferredLocale = 'vi';
     req.setLocale(preferredLocale);
     next();
   });
