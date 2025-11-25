@@ -16,6 +16,8 @@ export interface ISaveAnswerExamAttempt {
 }
 
 export interface IFilterExamAttempt {
+  is_finished?: boolean;
+  is_current_user_only?: boolean;
   exam_id?: number;
   title?: string;
   user_id?: number;

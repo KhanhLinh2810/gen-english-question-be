@@ -50,9 +50,7 @@ export class ExamAttemptService {
     const { query: query_for_exam, is_required: required_for_exam } =
       this.buildQueryExam(filter);
     return await ExamAttempts.findAndCountAll({
-      where: {
-        finished_at: { [Op.ne]: null },
-      },
+      where: this.buildQuery(filter),
       include: [
         {
           model: Users,
@@ -221,6 +219,14 @@ export class ExamAttemptService {
   }
 
   // helper
+  private buildQuery(filter: IFilterExamAttempt) {
+    const query: any = {};
+    if (filter.is_finished) {
+      query.finished_at = { [Op.ne]: null };
+    }
+    return query;
+  }
+
   private buildQueryUser(filter: IFilterExamAttempt) {
     const query: any = {};
     let is_required = false;

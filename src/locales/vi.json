@@ -1,4 +1,5 @@
 {
-    "success": "Thành công",
-    "create_sucess": "Tạo thành công"
+    "success": "Thành công.",
+    "create_sucess": "Tạo thành công.",
+    "internal_server_error": "Hệ thống có sự cố."
 }
