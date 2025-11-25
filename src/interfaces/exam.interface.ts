@@ -14,6 +14,7 @@ export interface IQuestionInExam {
 }
 
 export interface IFilterExam {
+  is_current_user_only?: string;
   title?: string;
   duration?: number;
   earliest_start_time?: string;

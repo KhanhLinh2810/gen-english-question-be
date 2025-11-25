@@ -16,9 +16,16 @@ export class ExamController {
 
   async index(req: Request, res: Response, next: NextFunction) {
     try {
+      const user = (req as CustomRequest).user;
+      if (!user) {
+        throw new AppError(BAD_REQUEST, 'user_not_found');
+      }
       const { page, limit, offset, sortBy, sortOrder } = paginate(req);
 
       const filter: IFilterExam = req.query;
+      if (filter.is_current_user_only) {
+        filter.user_id = user.id;
+      }
       const data = await this.examService.getMany(filter, {
         limit,
         offset,
