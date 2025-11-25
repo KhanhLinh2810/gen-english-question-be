@@ -1,6 +1,7 @@
 import { QuestionType } from '../enums';
 
 export interface IFilterQuestion {
+  is_current_user_only?: boolean;
   content?: string;
   tag?: string;
   user_id?: number;
