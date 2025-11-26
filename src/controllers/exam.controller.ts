@@ -6,6 +6,7 @@ import { ExamService } from '../services';
 import { AppError } from '../utility/appError.util';
 import { resOK } from '../utility/HttpException';
 import { paginate, parseSafeDate } from '../utility/utils';
+import { ExamDTO } from '../dtos';
 
 export class ExamController {
   private readonly examService: ExamService;
@@ -26,7 +27,7 @@ export class ExamController {
       if (filter.is_current_user_only) {
         filter.user_id = user.id;
       }
-      const data = await this.examService.getMany(filter, {
+      const data = await this.examService.getManyWithQuestions(filter, {
         limit,
         offset,
         order_by: sortBy,

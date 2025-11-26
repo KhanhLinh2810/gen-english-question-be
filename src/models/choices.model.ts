@@ -16,7 +16,7 @@ export class Choices extends Model<
   declare id: CreationOptional<number>;
   declare questionId: ForeignKey<Questions['id']>;
   declare content: string;
-  declare explanation: string;
+  declare explanation?: string;
   declare is_correct: boolean;
   declare created_at: CreationOptional<Date>;
   declare updated_at: CreationOptional<Date>;

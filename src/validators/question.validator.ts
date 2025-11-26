@@ -18,9 +18,9 @@ const createChoiceSchema: JSONSchemaType<ICreateChoice> = {
   properties: {
     content: { type: 'string', minLength: 1 },
     is_correct: { type: 'boolean' },
-    explanation: { type: 'string' },
+    explanation: { type: 'string', nullable: true },
   },
-  required: ['content', 'is_correct', 'explanation'],
+  required: ['content', 'is_correct'],
   additionalProperties: false,
 };
 export const createQuestionSchema: JSONSchemaType<ICreateQuestion> = {
@@ -62,9 +62,9 @@ const updateChoiceSchema: JSONSchemaType<IUpdateChoice> = {
     id: { type: 'integer', nullable: true },
     content: { type: 'string', minLength: 1 },
     is_correct: { type: 'boolean' },
-    explanation: { type: 'string' },
+    explanation: { type: 'string', nullable: true },
   },
-  required: ['content', 'is_correct', 'explanation'],
+  required: ['content', 'is_correct'],
   additionalProperties: false,
 };
 export const updateQuestionSchema: JSONSchemaType<IUpdateQuestion> = {

@@ -15,10 +15,13 @@ export interface IQuestionInExam {
 
 export interface IFilterExam {
   is_current_user_only?: string;
+  search?: string; // Combined search for title and username (contains search)
   title?: string;
   duration?: number;
-  earliest_start_time?: string;
-  lastest_start_time?: string;
+  duration_from?: number;
+  duration_to?: number;
+  earliest_start_time?: string; // Single datetime for overlap search
+  lastest_start_time?: string; // Single datetime for overlap search
   user_id?: number;
   username?: string;
 }
