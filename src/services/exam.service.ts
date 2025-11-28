@@ -27,6 +27,41 @@ export class ExamService {
     const query = this.buildQuery(filter);
     const { query: query_for_creator, is_required: required_for_creator } =
       this.buildQueryCretor(filter);
+    
+    // Handle combined search: if search is provided, we need to search both title and username
+    // This requires a more complex query structure
+    if (filter.search && filter.search.trim()) {
+      const searchTerm = `%${escapeForILike(filter.search.trim())}%`;
+      
+      // Remove title from main query since we'll handle it in the OR condition
+      const { title, ...queryWithoutTitle } = query;
+      
+      return await Exams.findAndCountAll({
+        where: {
+          ...queryWithoutTitle,
+          [Op.or]: [
+            { title: { [Op.like]: searchTerm } },
+            {
+              '$creator.username$': { [Op.like]: searchTerm }
+            }
+          ]
+        },
+        include: [
+          {
+            model: Users,
+            as: 'creator',
+            attributes: ['id', 'username', 'avatar_url'],
+            required: true, // Always required when searching by username
+          },
+        ],
+        limit: paging.limit,
+        offset: paging.offset,
+        order: [[paging.order_by, paging.sort]],
+        distinct: true,
+      });
+    }
+    
+    // Original logic for non-combined search
     return await Exams.findAndCountAll({
       where: query,
       include: [
@@ -43,6 +78,47 @@ export class ExamService {
       order: [[paging.order_by, paging.sort]],
       distinct: true,
     });
+  }
+
+  // get many with full data (including questions)
+  async getManyWithQuestions(filter: IFilterExam, paging: IPagination) {
+    const rawData = await this.getMany(filter, paging);
+    
+    // Transform each exam to include questions
+    const transformedRows = await Promise.all(
+      rawData.rows.map(async (exam) => {
+        const list_question_id = exam.list_question.map(
+          (question) => question.question_id,
+        );
+        
+        if (list_question_id.length === 0) {
+          // Return exam with empty questions if no questions
+          return {
+            ...exam.toJSON(),
+            list_question: []
+          };
+        }
+        
+        const list_question = await Questions.findAll({
+          where: { id: { [Op.in]: list_question_id } },
+          include: [
+            {
+              model: Choices,
+              as: 'choices',
+              attributes: ['content', 'is_correct', 'id', 'explanation'],
+            },
+          ],
+          attributes: ['content', 'description', 'score', 'id', 'type'],
+        });
+
+        return new ExamDTO(exam, list_question);
+      })
+    );
+
+    return {
+      rows: transformedRows,
+      count: rawData.count
+    };
   }
 
   // get one
@@ -122,23 +198,47 @@ export class ExamService {
   // helper
   private buildQuery(filter: IFilterExam) {
     const query: any = {};
-    if (filter.title) {
-      query.title = { [Op.like]: escapeForILike(filter.title) };
+    
+    // Handle combined search for title (will be handled in buildQueryCreator for username)
+    // Use LIKE with % wildcards for contains search
+    if (filter.search && filter.search.trim()) {
+      query.title = { [Op.like]: `%${escapeForILike(filter.search.trim())}%` };
+    } else if (filter.title && filter.title.trim()) {
+      query.title = { [Op.like]: `%${escapeForILike(filter.title.trim())}%` };
     }
-    if (filter.duration) {
+    
+    // Handle duration range - only add if values are valid
+    const durationFrom = _.toSafeInteger(filter.duration_from);
+    const durationTo = _.toSafeInteger(filter.duration_to);
+    
+    if (durationFrom > 0 || durationTo > 0) {
+      const durationQuery: any = {};
+      if (durationFrom > 0) {
+        durationQuery[Op.gte] = durationFrom;
+      }
+      if (durationTo > 0) {
+        durationQuery[Op.lte] = durationTo;
+      }
+      query.duration = durationQuery;
+    } else if (filter.duration && _.toSafeInteger(filter.duration) > 0) {
       query.duration = _.toSafeInteger(filter.duration);
     }
+    
+    // Handle earliest_start_time - simple comparison
     if (parseSafeDate(filter.earliest_start_time)) {
       query.earliest_start_time = {
         [Op.gte]: parseSafeDate(filter.earliest_start_time),
       };
     }
+    
+    // Handle lastest_start_time - simple comparison
     if (parseSafeDate(filter.lastest_start_time)) {
       query.lastest_start_time = {
         [Op.lte]: parseSafeDate(filter.lastest_start_time),
       };
     }
-    if (filter.user_id) {
+    
+    if (filter.user_id && _.toSafeInteger(filter.user_id) > 0) {
       query.creator_id = _.toSafeInteger(filter.user_id);
     }
     return query;
@@ -148,13 +248,19 @@ export class ExamService {
     const query: any = {};
     let is_required = false;
 
-    if (_.toSafeInteger(filter.user_id)) {
+    if (filter.user_id && _.toSafeInteger(filter.user_id) > 0) {
       is_required = true;
     }
-    if (filter.username) {
-      query.username = { [Op.like]: escapeForILike(filter.username) };
+    
+    // Handle combined search for username - use LIKE with % wildcards for contains search
+    if (filter.search && filter.search.trim()) {
+      query.username = { [Op.like]: `%${escapeForILike(filter.search.trim())}%` };
+      is_required = true;
+    } else if (filter.username && filter.username.trim()) {
+      query.username = { [Op.like]: `%${escapeForILike(filter.username.trim())}%` };
       is_required = true;
     }
+    
     return { query, is_required };
   }
 

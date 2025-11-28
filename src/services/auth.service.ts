@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import env from '../../env';
 import { BAD_REQUEST } from '../constants/constants';
 import { Users } from '../models';
@@ -50,7 +50,7 @@ export class AuthService {
   getToken(
     user: { id: number; email: string },
     key: string,
-    expiresIn = env.app.jwtExpiredIn,
+    expiresIn?: string | number,
   ): string {
     return jwt.sign(
       {
@@ -59,8 +59,8 @@ export class AuthService {
       },
       key,
       {
-        expiresIn,
-      },
+        expiresIn: expiresIn || env.app.jwtExpiredIn,
+      } as SignOptions,
     );
   }
 }
