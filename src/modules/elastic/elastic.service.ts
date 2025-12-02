@@ -161,6 +161,64 @@ export class ElasticService {
     );
   }
 
+  async searchSameStress(
+    same_stress: number,
+    size: number,
+    used_words: string[] = [],
+  ) {
+    const mustNot = used_words.length
+      ? [
+          {
+            terms: {
+              word: used_words,
+            },
+          },
+        ]
+      : [];
+
+    const result = await this.es.search({
+      index: 'phonetic_ipa_segement',
+      size,
+      query: {
+        function_score: {
+          query: {
+            bool: {
+              must: [
+                { term: { stress: same_stress } },
+                {
+                  range: {
+                    num_syllables: {
+                      gte: 2,
+                      lte: 5,
+                    },
+                  },
+                },
+              ],
+              must_not: mustNot,
+            },
+          },
+          functions: [
+            {
+              random_score: {
+                seed: Date.now(),
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    return result.hits.hits.map((h) => {
+      const src = h._source as any;
+      return {
+        word: src.word,
+        ipa: src.ipa,
+        stress: src.stress,
+        num_syllables: src.num_syllables,
+      };
+    });
+  }
+
   async getListWordInfo(word: string): Promise<IElasticPhoneticIPADocument[]> {
     if (!word) return [];
 
@@ -182,17 +240,28 @@ export class ElasticService {
 
   async getExistingWords(
     words: string[],
+    is_word_for_stress = false,
   ): Promise<IElasticPhoneticIPADocument[]> {
     if (!words.length) return [];
 
     const uniqueWords = Array.from(new Set(words.map((w) => w.toLowerCase())));
+
+    const mustQueries: any[] = [{ terms: { word: uniqueWords } }];
+    if (is_word_for_stress !== undefined) {
+      mustQueries.push({
+        range: {
+          num_syllables: {
+            gte: 2,
+            lte: 4,
+          },
+        },
+      });
+    }
     const rawData = await this.es.search({
       index: 'phonetic_ipa_segement',
       size: uniqueWords.length,
       query: {
-        terms: {
-          word: uniqueWords,
-        },
+        bool: { must: mustQueries },
       },
     });
 
@@ -203,13 +272,27 @@ export class ElasticService {
 
   async getRandomDocuments(
     count: number,
+    is_word_for_stress = false,
   ): Promise<IElasticPhoneticIPADocument[]> {
     const result = await this.es.search({
       index: 'phonetic_ipa_segement',
       size: count,
       query: {
         function_score: {
-          query: { match_all: {} },
+          query: {
+            bool: {
+              must: is_word_for_stress
+                ? {
+                    range: {
+                      num_syllables: {
+                        gte: 2,
+                        lte: 4,
+                      },
+                    },
+                  }
+                : { match_all: {} },
+            },
+          },
           functions: [
             {
               random_score: {

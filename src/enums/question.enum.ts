@@ -10,5 +10,8 @@ export enum QuestionType {
 
 export const CONTEXT_QUESTION = {
   PRONUNCIATION:
-    'Mark the letter A, B, C, or D on your answer sheet to indicate the word whose underlined part differs from the other three in pronunciation in each of the following questions.',
+    'Choose the option whose underlined part is pronounced differently from the others.',
+
+  STRESS:
+    'Choose the word whose primary stress is placed differently from the others.',
 };

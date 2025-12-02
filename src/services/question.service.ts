@@ -48,7 +48,7 @@ export class QuestionService {
   async createAutomaticQuestion(data: ICreateAutomaticQuestion) {
     switch (data.type) {
       case QuestionType.STRESS:
-
+        return await this.createStressQuestion(data);
       case QuestionType.PRONUNCIATION:
         return await this.createPronunciationQuestion(data);
     }
@@ -263,18 +263,25 @@ export class QuestionService {
     return -1;
   }
 
+  getRandomB(a: number): number {
+    const r = ((Math.random() * 3) | 0) + 1;
+    return r >= a ? r + 1 : r;
+  }
+
   private async createPronunciationQuestion(data: ICreateAutomaticQuestion) {
     const es = ElasticService.getInstance();
-    const usedWords = new Set<string>();
+    const used_words = new Set<string>();
 
     // 1. Lấy danh sách word hợp lệ
-    let validWords = await es.getExistingWords(data.list_words);
-    const randomFill = await es.getRandomDocuments(
-      data.num_question - validWords.length,
-    );
+    let valid_words = await es.getExistingWords(data.list_words);
+    if (data.num_question > valid_words.length) {
+      const random_fill = await es.getRandomDocuments(
+        data.num_question - valid_words.length,
+      );
 
-    validWords = [...validWords, ...randomFill];
-    validWords.forEach((w) => usedWords.add(w.word));
+      valid_words = [...valid_words, ...random_fill];
+    }
+    valid_words.forEach((w) => used_words.add(w.word));
 
     const result = [];
 
@@ -283,59 +290,72 @@ export class QuestionService {
       const explanations: string[] = [];
 
       // 2. Random base word
-      const baseWordA = randomItem(validWords);
-      const randomIndexA = Math.floor(
-        Math.random() * baseWordA.segement_ipa.length,
+      const base_word_A = randomItem(valid_words);
+      const random_index_A = Math.floor(
+        Math.random() * base_word_A.segement_ipa.length,
       );
-      const baseCharA = baseWordA.segement_word[randomIndexA];
-      const baseIPAA = baseWordA.segement_ipa[randomIndexA];
+      const base_char_A = base_word_A.segement_word[random_index_A];
+      const base_IPA_A = base_word_A.segement_ipa[random_index_A];
 
-      const markedA = this.markCharacterInWord(baseWordA, baseIPAA, baseCharA);
+      const markedA = this.markCharacterInWord(
+        base_word_A,
+        base_IPA_A,
+        base_char_A,
+      );
       choices.push(markedA);
-      explanations.push(baseWordA.ipa);
+      explanations.push(base_word_A.ipa);
 
       // 4. Lấy word B có cùng char nhưng IPA khác
-      const diffIPAList = await es.searchDifferentIPA(baseCharA, baseIPAA, 1, [
-        ...usedWords,
-      ]);
+      const diff_IPA_list = await es.searchDifferentIPA(
+        base_char_A,
+        base_IPA_A,
+        1,
+        [...used_words],
+      );
 
-      if (diffIPAList.length === 0) continue;
-      const baseWordB = diffIPAList[0];
-      usedWords.add(baseWordB.word);
+      if (diff_IPA_list.length === 0) continue;
+      const base_word_B = diff_IPA_list[0];
+      used_words.add(base_word_B.word);
 
-      const indexB = this.findDifferentIPAIndex(baseWordB, baseIPAA, baseCharA);
+      const indexB = this.findDifferentIPAIndex(
+        base_word_B,
+        base_IPA_A,
+        base_char_A,
+      );
       if (indexB === -1) continue;
 
       const markedB = this.markCharacterInWord(
-        baseWordB,
-        baseWordB.segement_ipa[indexB],
-        baseWordB.segement_word[indexB],
+        base_word_B,
+        base_word_B.segement_ipa[indexB],
+        base_word_B.segement_word[indexB],
       );
 
       choices.push(markedB);
-      explanations.push(baseWordB.ipa);
+      explanations.push(base_word_B.ipa);
 
       // 5. Random: word A hoặc B là đáp án đúng
       const isAcorrect = Math.random() < 0.75;
 
-      const targetIPA = isAcorrect ? baseIPAA : baseWordB.segement_ipa[indexB];
+      const targetIPA = isAcorrect
+        ? base_IPA_A
+        : base_word_B.segement_ipa[indexB];
       const targetChar = isAcorrect
-        ? baseCharA
-        : baseWordB.segement_word[indexB];
+        ? base_char_A
+        : base_word_B.segement_word[indexB];
 
       // 6. Lấy các word distractor có IPA giống (sameIPA)
       const distractors = await es.searchSameIPA(
         targetIPA,
         targetChar,
         data.num_ans_per_question - 2,
-        [...usedWords],
+        [...used_words],
       );
 
       for (const word of distractors) {
         const marked = this.markCharacterInWord(word, targetIPA, targetChar);
         choices.push(marked);
         explanations.push(word.ipa);
-        usedWords.add(word.word);
+        used_words.add(word.word);
       }
 
       // 7. Shuffle đồng bộ
@@ -346,7 +366,7 @@ export class QuestionService {
       const shuffled = _.shuffle(zipped);
 
       const answer = isAcorrect ? markedA : markedB;
-      const finalChoices = shuffled.map((s) => {
+      const final_choices = shuffled.map((s) => {
         return {
           content: s.choice,
           explanations: s.explain,
@@ -360,8 +380,114 @@ export class QuestionService {
         description: '',
         score: 4,
         by_ai: true,
-        choices: finalChoices,
+        choices: final_choices,
       });
+    }
+
+    return result;
+  }
+
+  private async createStressQuestion(data: ICreateAutomaticQuestion) {
+    const es = ElasticService.getInstance();
+    const used_words = new Set<string>();
+
+    // 1. Lấy danh sách word hợp lệ
+    let valid_words = await es.getExistingWords(data.list_words, true);
+    if (data.num_question > valid_words.length) {
+      const extra = await es.getRandomDocuments(
+        data.num_question - valid_words.length,
+        true,
+      );
+      valid_words = [...valid_words, ...extra];
+    }
+
+    const result = [];
+
+    for (let i = 0; i < data.num_question; i++) {
+      const choices: string[] = [];
+      const explanations: string[] = [];
+
+      // 2. random từ A
+      const base_A = randomItem(valid_words);
+      const stress_A = base_A.stress;
+
+      choices.push(base_A.word);
+      explanations.push(base_A.ipa);
+
+      // 3. random stress B khác A
+      const stress_B = this.getRandomB(stress_A);
+
+      // 4. random xem A có phải đáp án đúng 75%
+      const is_A_correct = Math.random() < 0.75;
+
+      let answer = '';
+
+      if (is_A_correct) {
+        answer = base_A.word;
+
+        // distractors cùng stress A
+        const distractor_A = await es.searchSameStress(
+          stress_A,
+          data.num_ans_per_question - 2,
+          [...used_words],
+        );
+
+        distractor_A.forEach((w) => {
+          choices.push(w.word);
+          explanations.push(w.ipa);
+        });
+
+        // 1 từ stress khác (B)
+        const word_B = await es.searchSameStress(stress_B, 1, [...used_words]);
+
+        if (!word_B?.length) continue;
+
+        choices.push(word_B[0].word);
+        explanations.push(word_B[0].ipa);
+      } else {
+        // distractors stress B
+        const distractor_B = await es.searchSameStress(
+          stress_B,
+          data.num_ans_per_question - 1,
+          [...used_words],
+        );
+
+        if (distractor_B.length < data.num_ans_per_question - 1) continue;
+
+        distractor_B.forEach((w) => {
+          choices.push(w.word);
+          explanations.push(w.ipa);
+        });
+
+        // chọn ngẫu nhiên distractor làm đáp án
+        const picked = randomItem(distractor_B);
+        answer = picked.word;
+      }
+
+      // 7. Shuffle đồng bộ
+      const zipped = choices.map((c, i) => ({
+        choice: c,
+        explain: explanations[i],
+      }));
+
+      const shuffled = _.shuffle(zipped);
+
+      const final_choices = shuffled.map((s) => ({
+        content: s.choice,
+        explanations: s.explain,
+        is_correct: s.choice === answer,
+      }));
+
+      result.push({
+        content: CONTEXT_QUESTION.STRESS,
+        type: QuestionType.STRESS,
+        description: '',
+        score: 4,
+        by_ai: true,
+        choices: final_choices,
+      });
+
+      used_words.add(answer);
     }
 
     return result;
