@@ -40,6 +40,7 @@ export class ExamAttempts extends Model<
   declare wrong_question?: number | null;
   declare score?: number | null;
   declare list_answer: IAnswerInExamAttempt[];
+  declare deleted_at?: Date | null;
   declare created_at: CreationOptional<Date>;
   declare updated_at: CreationOptional<Date>;
 
@@ -114,6 +115,10 @@ export class ExamAttempts extends Model<
           type: DataTypes.JSON,
           allowNull: false,
           defaultValue: [],
+        },
+        deleted_at: {
+          type: DataTypes.DATE,
+          allowNull: true,
         },
         created_at: {
           type: DataTypes.DATE,

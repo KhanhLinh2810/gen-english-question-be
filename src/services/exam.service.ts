@@ -33,32 +33,65 @@ export class ExamService {
     if (filter.search && filter.search.trim()) {
       const searchTerm = `%${escapeForILike(filter.search.trim())}%`;
       
-      // Remove title from main query since we'll handle it in the OR condition
-      const { title, ...queryWithoutTitle } = query;
+      // Remove title and Op.or from main query since we'll handle it in the OR condition
+      const { title, [Op.or]: existingOr, ...queryWithoutTitle } = query;
       
-      return await Exams.findAndCountAll({
-        where: {
-          ...queryWithoutTitle,
-          [Op.or]: [
-            { title: { [Op.like]: searchTerm } },
-            {
-              '$creator.username$': { [Op.like]: searchTerm }
-            }
-          ]
-        },
-        include: [
-          {
-            model: Users,
-            as: 'creator',
-            attributes: ['id', 'username', 'avatar_url'],
-            required: true, // Always required when searching by username
+      // Build the OR condition for search
+      const searchOrConditions = [
+        { title: { [Op.like]: searchTerm } },
+        {
+          '$creator.username$': { [Op.like]: searchTerm }
+        }
+      ];
+      
+      // If we have existing OR conditions (for is_public/creator_id), combine them
+      if (existingOr && Array.isArray(existingOr)) {
+        // Combine search OR with existing OR using Op.and
+        return await Exams.findAndCountAll({
+          where: {
+            ...queryWithoutTitle,
+            [Op.and]: [
+              {
+                [Op.or]: searchOrConditions
+              },
+              {
+                [Op.or]: existingOr
+              }
+            ]
           },
-        ],
-        limit: paging.limit,
-        offset: paging.offset,
-        order: [[paging.order_by, paging.sort]],
-        distinct: true,
-      });
+          include: [
+            {
+              model: Users,
+              as: 'creator',
+              attributes: ['id', 'username', 'avatar_url'],
+              required: true, // Always required when searching by username
+            },
+          ],
+          limit: paging.limit,
+          offset: paging.offset,
+          order: [[paging.order_by, paging.sort]],
+          distinct: true,
+        });
+      } else {
+        return await Exams.findAndCountAll({
+          where: {
+            ...queryWithoutTitle,
+            [Op.or]: searchOrConditions
+          },
+          include: [
+            {
+              model: Users,
+              as: 'creator',
+              attributes: ['id', 'username', 'avatar_url'],
+              required: true, // Always required when searching by username
+            },
+          ],
+          limit: paging.limit,
+          offset: paging.offset,
+          order: [[paging.order_by, paging.sort]],
+          distinct: true,
+        });
+      }
     }
     
     // Original logic for non-combined search
@@ -139,8 +172,15 @@ export class ExamService {
   // find or fail
   async findOrFail(id: number, creator_id?: number, transaction?: Transaction) {
     const exam = await this.findByPk(id, transaction);
-    if (!exam || (creator_id && exam.creator_id !== creator_id)) {
+    if (!exam) {
       throw new AppError(BAD_REQUEST, 'exam_not_found');
+    }
+    // Only creator can access (if creator_id is provided and exam has a creator)
+    // If exam has no creator, no one can edit/delete it
+    if (creator_id) {
+      if (!exam.creator_id || exam.creator_id !== creator_id) {
+        throw new AppError(BAD_REQUEST, 'exam_not_found');
+      }
     }
     return exam;
   }
@@ -238,9 +278,74 @@ export class ExamService {
       };
     }
     
+    // Handle user_id and is_public filter logic
     if (filter.user_id && _.toSafeInteger(filter.user_id) > 0) {
+      // If filtering by specific user (is_current_user_only), show all their exams
       query.creator_id = _.toSafeInteger(filter.user_id);
+      // Don't filter by is_public when showing own exams
+    } else if (filter.is_public !== undefined) {
+      // If is_public is explicitly set, filter by it
+      query.is_public = filter.is_public;
+    } else if (filter.is_current_user_only !== 'true' && !filter.is_current_user_only) {
+      // When not filtering by own exams, show public exams OR user's own exams
+      if ((filter as any).current_user_id) {
+        // Show public exams OR user's own exams
+        const publicOrOwnCondition = {
+          [Op.or]: [
+            { is_public: true },
+            { creator_id: (filter as any).current_user_id }
+          ]
+        };
+        
+        // Check if there are other conditions by checking query keys
+        const queryKeys = Object.keys(query);
+        const hasOtherConditions = queryKeys.length > 0;
+        
+        if (hasOtherConditions) {
+          // Collect all existing conditions
+          const existingConditions: any[] = [];
+          
+          // Add existing Op.and conditions if any
+          if (query[Op.and]) {
+            existingConditions.push(...(query[Op.and] as any[]));
+          }
+          
+          // Add other individual conditions (regular keys, not symbols)
+          queryKeys.forEach(key => {
+            const value = query[key];
+            // Only add if it's not already in Op.and and not a symbol
+            if (value !== undefined && key !== String(Op.or) && key !== String(Op.and)) {
+              existingConditions.push({ [key]: value });
+            }
+          });
+          
+          // Add the public or own condition
+          existingConditions.push(publicOrOwnCondition);
+          
+          // Clear query and rebuild with Op.and
+          Object.keys(query).forEach(key => {
+            if (key !== String(Op.or) && key !== String(Op.and)) {
+              delete query[key];
+            }
+          });
+          if (Op.or in query) delete query[Op.or];
+          if (Op.and in query) delete query[Op.and];
+          
+          query[Op.and] = existingConditions;
+        } else {
+          // No other conditions, just use Op.or
+          query[Op.or] = [
+            { is_public: true },
+            { creator_id: (filter as any).current_user_id }
+          ];
+        }
+      } else {
+        // No user context, only show public exams
+        query.is_public = true;
+      }
     }
+    // If is_current_user_only is 'true' or truthy, don't filter by is_public (show all user's exams)
+    
     return query;
   }
 
@@ -303,6 +408,8 @@ export class ExamService {
       creator_id,
       list_question,
       total_question,
+      duration: data.duration || 30, // Default 30 minutes
+      is_public: data.is_public !== undefined ? data.is_public : true, // Default true (public)
     };
   }
 }

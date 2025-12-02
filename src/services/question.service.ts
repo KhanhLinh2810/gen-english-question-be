@@ -81,8 +81,15 @@ export class QuestionService {
       ],
       transaction,
     });
-    if (!question || (creator_id && question.creator_id !== creator_id)) {
+    if (!question) {
       throw new AppError(BAD_REQUEST, 'question_not_found');
+    }
+    // Only creator can access (if creator_id is provided and question has a creator)
+    // If question has no creator (system question), no one can edit/delete it
+    if (creator_id) {
+      if (!question.creator_id || question.creator_id !== creator_id) {
+        throw new AppError(BAD_REQUEST, 'question_not_found');
+      }
     }
     return question;
   }
@@ -239,13 +246,13 @@ export class QuestionService {
   // other
   processCreateListQuestionData(
     questions: ICreateQuestion[],
-    creator_id: number,
+    creator_id?: number | null,
   ) {
     return questions.map((question) => {
       this.validateParams(question);
       return {
         ...question,
-        creator_id,
+        creator_id: creator_id || null, // Allow null for system questions
       };
     });
   }

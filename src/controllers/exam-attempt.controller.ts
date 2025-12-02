@@ -157,6 +157,22 @@ export class ExamAttemptController {
       next(e);
     }
   }
+
+  async destroy(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = (req as CustomRequest).user;
+      if (!user) {
+        throw new AppError(BAD_REQUEST, 'user_not_found');
+      }
+
+      const exam_attempt_id = _.toSafeInteger(req.params.id);
+      await this.examAttemptService.destroy(exam_attempt_id, user.id);
+      
+      return res.status(RESPONSE_SUCCESS).json(resOK(null, 'Xóa bài làm thành công'));
+    } catch (e) {
+      next(e);
+    }
+  }
 }
 
 export const examAttemptController = new ExamAttemptController();

@@ -11,7 +11,7 @@ export interface ICreateExamAttempt {
 export interface ISaveAnswerExamAttempt {
   list_answer: {
     question_id: number;
-    choice_id: number;
+    choice_id?: number | null;
   }[];
 }
 
