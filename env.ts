@@ -48,7 +48,10 @@ export default {
     retryMax: Number(process.env.DB_RETRY_MAX) || 5,
     retryDelay: Number(process.env.DB_RETRY_DELAY) || 5000,
   },
-
+  elastic: {
+    url: process.env.ELASTIC_URL || 'https://elastic.com',
+    api_key: process.env.ELASTIC_API_KEY || '123456',
+  },
   mail: {
     host: process.env.MAIL_HOST || 'sandbox.smtp.mailtrap.io',
     port: parseInt(process.env.MAIL_PORT!) || 2525,

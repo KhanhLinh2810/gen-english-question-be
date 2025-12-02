@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { questionController } from '../../controllers/question.controller';
 import { validateBody } from '../../middleware/validation.middleware';
 import {
+  createAutomaticQuestionSchema,
   createListQuestionSchema,
   createQuestionSchema,
   updateQuestionSchema,
@@ -21,6 +22,11 @@ router.post(
   '/',
   validateBody(createListQuestionSchema),
   questionController.createMany.bind(questionController),
+);
+router.post(
+  '/automatic',
+  validateBody(createAutomaticQuestionSchema),
+  questionController.createAutomaticQuestion.bind(questionController),
 );
 router.put(
   '/:id',

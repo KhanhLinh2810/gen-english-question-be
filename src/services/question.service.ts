@@ -1,11 +1,20 @@
-import _ from 'lodash';
+import _, { words } from 'lodash';
 import { CreationAttributes, Op, Transaction } from 'sequelize';
 import { BAD_REQUEST } from '../constants/constants';
-import { ICreateQuestion, IFilterQuestion, IPagination } from '../interfaces';
+import {
+  ICreateAutomaticQuestion,
+  ICreateQuestion,
+  IElasticPhoneticIPADocument,
+  IFilterQuestion,
+  IPagination,
+} from '../interfaces';
 import { Choices } from '../models/choices.model';
 import { Questions } from '../models/questions.model';
 import { Users } from '../models/users.model';
 import { AppError } from '../utility/appError.util';
+import { CONTEXT_QUESTION, QuestionType } from '../enums';
+import { randomItem } from '../utility/utils';
+import { ElasticService } from '../modules';
 
 export class QuestionService {
   private static instance: QuestionService;
@@ -33,6 +42,16 @@ export class QuestionService {
       include: [{ model: Choices, as: 'choices' }],
       transaction,
     });
+  }
+
+  // create auto
+  async createAutomaticQuestion(data: ICreateAutomaticQuestion) {
+    switch (data.type) {
+      case QuestionType.STRESS:
+
+      case QuestionType.PRONUNCIATION:
+        return await this.createPronunciationQuestion(data);
+    }
   }
 
   // get many
@@ -194,6 +213,158 @@ export class QuestionService {
       query.creator_id = filter.user_id;
     }
     return query;
+  }
+
+  private cal_num_word_in_list_word_per_question(
+    list_words: any[],
+    num_question: number,
+  ) {
+    return _.toSafeInteger(list_words.length / num_question);
+  }
+
+  private markCharacterInWord(
+    wordData: IElasticPhoneticIPADocument,
+    targetIPA: string,
+    targetChar: string,
+  ) {
+    let result = '';
+    let marked = false;
+
+    for (let i = 0; i < wordData.segement_word.length; i++) {
+      const ch = wordData.segement_word[i];
+
+      if (
+        !marked &&
+        wordData.segement_ipa[i] === targetIPA &&
+        ch === targetChar
+      ) {
+        result += `/${ch}/`;
+        marked = true;
+      } else {
+        result += ch;
+      }
+    }
+    return result;
+  }
+
+  private findDifferentIPAIndex(
+    word: IElasticPhoneticIPADocument,
+    targetIPA: string,
+    targetChar: string,
+  ) {
+    for (let i = word.segement_ipa.length - 1; i >= 0; i--) {
+      if (
+        word.segement_word[i] === targetChar &&
+        word.segement_ipa[i] !== targetIPA
+      ) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  private async createPronunciationQuestion(data: ICreateAutomaticQuestion) {
+    const es = ElasticService.getInstance();
+    const usedWords = new Set<string>();
+
+    // 1. Lấy danh sách word hợp lệ
+    let validWords = await es.getExistingWords(data.list_words);
+    const randomFill = await es.getRandomDocuments(
+      data.num_question - validWords.length,
+    );
+
+    validWords = [...validWords, ...randomFill];
+    validWords.forEach((w) => usedWords.add(w.word));
+
+    const result = [];
+
+    for (let i = 0; i < data.num_question; i++) {
+      const choices: string[] = [];
+      const explanations: string[] = [];
+
+      // 2. Random base word
+      const baseWordA = randomItem(validWords);
+      const randomIndexA = Math.floor(
+        Math.random() * baseWordA.segement_ipa.length,
+      );
+      const baseCharA = baseWordA.segement_word[randomIndexA];
+      const baseIPAA = baseWordA.segement_ipa[randomIndexA];
+
+      const markedA = this.markCharacterInWord(baseWordA, baseIPAA, baseCharA);
+      choices.push(markedA);
+      explanations.push(baseWordA.ipa);
+
+      // 4. Lấy word B có cùng char nhưng IPA khác
+      const diffIPAList = await es.searchDifferentIPA(baseCharA, baseIPAA, 1, [
+        ...usedWords,
+      ]);
+
+      if (diffIPAList.length === 0) continue;
+      const baseWordB = diffIPAList[0];
+      usedWords.add(baseWordB.word);
+
+      const indexB = this.findDifferentIPAIndex(baseWordB, baseIPAA, baseCharA);
+      if (indexB === -1) continue;
+
+      const markedB = this.markCharacterInWord(
+        baseWordB,
+        baseWordB.segement_ipa[indexB],
+        baseWordB.segement_word[indexB],
+      );
+
+      choices.push(markedB);
+      explanations.push(baseWordB.ipa);
+
+      // 5. Random: word A hoặc B là đáp án đúng
+      const isAcorrect = Math.random() < 0.75;
+
+      const targetIPA = isAcorrect ? baseIPAA : baseWordB.segement_ipa[indexB];
+      const targetChar = isAcorrect
+        ? baseCharA
+        : baseWordB.segement_word[indexB];
+
+      // 6. Lấy các word distractor có IPA giống (sameIPA)
+      const distractors = await es.searchSameIPA(
+        targetIPA,
+        targetChar,
+        data.num_ans_per_question - 2,
+        [...usedWords],
+      );
+
+      for (const word of distractors) {
+        const marked = this.markCharacterInWord(word, targetIPA, targetChar);
+        choices.push(marked);
+        explanations.push(word.ipa);
+        usedWords.add(word.word);
+      }
+
+      // 7. Shuffle đồng bộ
+      const zipped = choices.map((c, i) => ({
+        choice: c,
+        explain: explanations[i],
+      }));
+      const shuffled = _.shuffle(zipped);
+
+      const answer = isAcorrect ? markedA : markedB;
+      const finalChoices = shuffled.map((s) => {
+        return {
+          content: s.choice,
+          explanations: s.explain,
+          is_correct: s.choice === answer,
+        };
+      });
+
+      result.push({
+        content: CONTEXT_QUESTION.PRONUNCIATION,
+        type: QuestionType.PRONUNCIATION,
+        description: '',
+        score: 4,
+        by_ai: true,
+        choices: finalChoices,
+      });
+    }
+
+    return result;
   }
 
   // other

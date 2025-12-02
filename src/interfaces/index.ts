@@ -6,3 +6,4 @@ export * from './comment.interface';
 export * from './rating.interface';
 export * from './exam.interface';
 export * from './exam-attempt.inteface';
+export * from './elastic.interface';

@@ -27,6 +27,7 @@
 	"dependencies": {
 		"@aws-sdk/client-s3": "3.873.0",
 		"@aws-sdk/client-ses": "3.873.0",
+		"@elastic/elasticsearch": "^9.2.0",
 		"@keyv/redis": "^4.0.2",
 		"@types/bcryptjs": "^2.4.2",
 		"@types/i18n": "^0.13.12",

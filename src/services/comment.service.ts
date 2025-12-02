@@ -10,8 +10,8 @@ import {
 import { Comments } from '../models/comments.model';
 import { Users } from '../models/users.model';
 import { AppError } from '../utility/appError.util';
-import { Choices } from 'src/models/choices.model';
-import { Questions } from 'src/models/questions.model';
+import { Choices } from '../models/choices.model';
+import { Questions } from '../models/questions.model';
 
 export class CommentService {
   private static instance: CommentService;
@@ -54,12 +54,8 @@ export class CommentService {
   }
 
   // find or fail
-  async findOrFail(
-    id: number,
-    user_id?: number,
-    transaction?: Transaction,
-  ) {
-    const comment = await Comments.findByPk(id, {transaction});
+  async findOrFail(id: number, user_id?: number, transaction?: Transaction) {
+    const comment = await Comments.findByPk(id, { transaction });
     if (!comment || (user_id && comment.user_id !== user_id)) {
       throw new AppError(BAD_REQUEST, 'comment_not_found');
     }

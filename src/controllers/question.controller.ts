@@ -104,6 +104,23 @@ export class QuestionController {
     }
   }
 
+  async createAutomaticQuestion(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const user = (req as CustomRequest).user;
+      if (!user) {
+        throw new AppError(BAD_REQUEST, 'user_not_found');
+      }
+      const data = await this.questionService.createAutomaticQuestion(req.body);
+      return res.status(RESPONSE_SUCCESS).json(resOK(data));
+    } catch (e) {
+      next(e);
+    }
+  }
+
   async update(req: Request, res: Response, next: NextFunction) {
     const transaction = await db.sequalize.transaction();
     try {
