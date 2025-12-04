@@ -46,7 +46,7 @@ export class QuestionService {
           as: 'creator',
           attributes: ['id', 'username', 'avatar_url'],
         },
-        { model: Choices, as: 'choices', attributes: ['id', 'content'] },
+        { model: Choices, as: 'choices', attributes: ['id', 'content', 'is_correct', 'explanation'] },
       ],
       limit: paging.limit,
       offset: paging.offset,
@@ -81,8 +81,15 @@ export class QuestionService {
       ],
       transaction,
     });
-    if (!question || (creator_id && question.creator_id !== creator_id)) {
+    if (!question) {
       throw new AppError(BAD_REQUEST, 'question_not_found');
+    }
+    // Only creator can access (if creator_id is provided and question has a creator)
+    // If question has no creator (system question), no one can edit/delete it
+    if (creator_id) {
+      if (!question.creator_id || question.creator_id !== creator_id) {
+        throw new AppError(BAD_REQUEST, 'question_not_found');
+      }
     }
     return question;
   }
@@ -94,7 +101,7 @@ export class QuestionService {
     creator_id: number,
     transaction: Transaction,
   ) {
-    this.validateParams(data);
+    this.validateUpdateParams(data);
     const question = await this.findOrFailWithRelations(id, creator_id);
     await question.update(data, { transaction });
 
@@ -169,7 +176,19 @@ export class QuestionService {
   }
 
   // validate
-  validateParams(data: CreationAttributes<Questions>) {
+  validateParams(data: ICreateQuestion) {
+    let count_correct_choice = 0;
+    data.choices.map((choice) => {
+      if (choice.is_correct == true) count_correct_choice++;
+    });
+    if (!count_correct_choice)
+      throw new AppError(
+        BAD_REQUEST,
+        'question_must_have_at_least_one_correct_answer',
+      );
+  }
+
+  validateUpdateParams(data: CreationAttributes<Questions>) {
     let count_correct_choice = 0;
     data.choices.map((choice) => {
       if (choice.is_correct == true) count_correct_choice++;
@@ -184,28 +203,56 @@ export class QuestionService {
   // helper
   private buildQuery(filter: IFilterQuestion) {
     const query: any = {};
-    if (filter.content) {
-      query.content = { [Op.like]: `%${filter.content}%` };
+    
+    // Simple approach: if both content and tag exist and are the same, search both
+    if (filter.content && filter.tag && filter.content === filter.tag) {
+      query[Op.or] = [
+        { content: { [Op.like]: `%${filter.content}%` } },
+        { 
+          tags: { 
+            [Op.and]: [
+              { [Op.ne]: null },
+              { [Op.like]: `%${filter.tag}%` }
+            ]
+          }
+        }
+      ];
+    } else {
+      // Individual filters
+      if (filter.content) {
+        query.content = { [Op.like]: `%${filter.content}%` };
+      }
+      if (filter.tag && !filter.content) { // Only apply tag filter if no content filter
+        query.tags = { 
+          [Op.and]: [
+            { [Op.ne]: null },
+            { [Op.like]: `%${filter.tag}%` }
+          ]
+        };
+      }
     }
-    if (filter.tag) {
-      query.tags = { [Op.like]: `%${filter.tag}%` };
-    }
+    
     if (filter.user_id) {
       query.creator_id = filter.user_id;
     }
+    
+    // Debug log
+    console.log('buildQuery filter:', filter);
+    console.log('buildQuery result:', JSON.stringify(query, null, 2));
+    
     return query;
   }
 
   // other
   processCreateListQuestionData(
     questions: ICreateQuestion[],
-    creator_id: number,
+    creator_id?: number | null,
   ) {
     return questions.map((question) => {
       this.validateParams(question);
       return {
         ...question,
-        creator_id,
+        creator_id: creator_id || null, // Allow null for system questions
       };
     });
   }

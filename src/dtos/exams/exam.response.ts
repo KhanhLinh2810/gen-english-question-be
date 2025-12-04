@@ -24,6 +24,7 @@ export class ExamDTO {
   public lastest_start_time?: Date;
   public created_at: Date;
   public updated_at: Date;
+  public is_public?: boolean;
 
   public creator_id?: number | undefined;
   public creator?: Creator | undefined;
@@ -41,6 +42,7 @@ export class ExamDTO {
     this.created_at = exam.created_at;
     this.updated_at = exam.updated_at;
     this.creator_id = exam.creator_id ?? undefined;
+    this.is_public = exam.is_public !== undefined && exam.is_public !== null ? exam.is_public : true; // Default to true if not set or null
 
     this.creator = exam.creator
       ? {

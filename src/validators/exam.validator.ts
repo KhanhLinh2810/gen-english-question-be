@@ -6,7 +6,7 @@ export const createExamSchema: JSONSchemaType<ICreateExam> = {
   type: 'object',
   properties: {
     title: { type: 'string', minLength: 1, maxLength: 100 },
-    duration: { type: 'integer', minimum: 1 },
+    duration: { type: 'integer', minimum: 1, nullable: true },
     earliest_start_time: {
       type: 'string',
       pattern: PATTERN.DATE_ISO_8601,
@@ -31,10 +31,10 @@ export const createExamSchema: JSONSchemaType<ICreateExam> = {
       minItems: 1,
       maxItems: 100,
     },
+    is_public: { type: 'boolean', nullable: true },
   },
   required: [
     'title',
-    'duration',
     'earliest_start_time',
     'note',
     'list_question',

@@ -30,11 +30,14 @@ export class ExamAttemptService {
   ) {
     const exam_attempt = await ExamAttempts.create(data, { transaction });
     const scheduleService = ScheduleService.getInstance();
+    // Schedule auto-submit after duration (in minutes) converted to milliseconds
+    // duration is in minutes, so multiply by 60 * 1000 to get milliseconds
+    const delayMs = exam_attempt.duration * 60 * 1000;
     const job = await scheduleService.addJob(
       SCHEDULE_JOB_NAME.SUBMIT_EXAM,
       { id: exam_attempt.id },
       {
-        delay: 1000,
+        delay: delayMs,
         attempts: 3,
         removeOnComplete: true,
       },
@@ -62,7 +65,7 @@ export class ExamAttemptService {
         {
           model: Exams,
           as: 'exam',
-          attributes: ['id', 'title'],
+          attributes: ['id', 'title', 'duration'],
           where: query_for_exam,
           required: required_for_exam,
         },
@@ -76,7 +79,11 @@ export class ExamAttemptService {
 
   // get one
   async findByPk(id: number, transaction?: Transaction) {
-    return await ExamAttempts.findByPk(id, {
+    return await ExamAttempts.findOne({
+      where: {
+        id,
+        deleted_at: null, // Only find non-deleted attempts
+      },
       include: [
         {
           model: Exams,
@@ -97,39 +104,92 @@ export class ExamAttemptService {
   }
 
   async detailExam(exam_id: number, user_id: number) {
-    const exam_attempt = await this.findOrFail(exam_id, user_id);
+    // Load exam_attempt with exam for buildExamDetail
+    const exam_attempt = await ExamAttempts.findOne({
+      where: {
+        id: exam_id,
+        deleted_at: null,
+        user_id,
+      },
+      include: [
+        {
+          model: Exams,
+          as: 'exam',
+          attributes: [
+            'id',
+            'title',
+            'note',
+            'list_question',
+            'total_question',
+            'creator_id',
+            'lastest_start_time',
+          ],
+          required: true,
+        },
+      ],
+    });
+    
+    if (!exam_attempt) {
+      throw new AppError(BAD_REQUEST, 'exam_attempt_not_found');
+    }
+    
     this.checkExamNotClosed(exam_attempt);
 
     return await this.buildExamDetail(exam_attempt, false);
   }
 
   async detailAfterSubmit(id: number, user_id: number) {
-    const exam_attempt = await this.findOrFail(id);
+    // Load exam_attempt with exam for buildExamDetail
+    const exam_attempt = await ExamAttempts.findOne({
+      where: {
+        id,
+        deleted_at: null,
+      },
+      include: [
+        {
+          model: Exams,
+          as: 'exam',
+          attributes: [
+            'id',
+            'title',
+            'note',
+            'list_question',
+            'total_question',
+            'creator_id',
+            'lastest_start_time',
+          ],
+          required: true,
+        },
+      ],
+    });
+    
+    if (!exam_attempt) {
+      throw new AppError(BAD_REQUEST, 'exam_attempt_not_found');
+    }
+    
     if (
       user_id !== exam_attempt.user_id &&
       user_id != exam_attempt.exam.creator_id
     ) {
       throw new AppError(BAD_REQUEST, 'exam_attempt_unauthorized_access');
     }
-    if (
-      user_id !== exam_attempt.exam.creator_id &&
-      exam_attempt.exam.lastest_start_time
-    ) {
-      const now = new Date();
-      const lastest_start_time = new Date(exam_attempt.exam.lastest_start_time);
-      if (now.getTime() < lastest_start_time.getTime()) {
-        throw new AppError(BAD_REQUEST, 'access_blocked_until_end');
-      }
-    }
+    // User who submitted the exam can always view their result immediately
+    // Only check lastest_start_time for review access (handled in frontend)
 
     return await this.buildExamDetail(exam_attempt, true);
   }
 
   async getOnGoingExam(data: ICreateExamAttempt, user_id: number) {
-    return await ExamAttempts.findOne({
-      where: { user_id, exam_id: data.exam_id, finished_at: null },
+    const ongoingExam = await ExamAttempts.findOne({
+      where: { 
+        user_id, 
+        exam_id: data.exam_id, 
+        finished_at: null,
+        deleted_at: null, // Only find non-deleted attempts
+      },
       attributes: ['id'],
     });
+    return ongoingExam;
   }
 
   // find or fail
@@ -138,8 +198,15 @@ export class ExamAttemptService {
     user_id?: number,
     transaction?: Transaction,
   ) {
-    const exam_attempt = await this.findByPk(exam_attempt_id, transaction);
-    if (!exam_attempt || (user_id && user_id !== exam_attempt.user_id)) {
+    const exam_attempt = await ExamAttempts.findOne({
+      where: {
+        id: exam_attempt_id,
+        deleted_at: null, // Only find non-deleted attempts
+        ...(user_id ? { user_id } : {}),
+      },
+      transaction,
+    });
+    if (!exam_attempt) {
       throw new AppError(BAD_REQUEST, 'exam_attempt_not_found');
     }
     return exam_attempt;
@@ -183,44 +250,107 @@ export class ExamAttemptService {
   ) {
     const finished_at = new Date();
     // save answer
-    const exam_attempt_db = await this.saveAnswer(
+    await this.saveAnswer(
       data,
       exam_attempt_id,
       user_id,
       transaction,
     );
 
+    // Reload exam_attempt with exam for gradingExam
+    const exam_attempt_db = await ExamAttempts.findOne({
+      where: {
+        id: exam_attempt_id,
+        deleted_at: null,
+        user_id,
+      },
+      include: [
+        {
+          model: Exams,
+          as: 'exam',
+          attributes: [
+            'id',
+            'title',
+            'note',
+            'list_question',
+            'total_question',
+            'creator_id',
+          ],
+          required: true,
+        },
+      ],
+      transaction,
+    });
+
+    if (!exam_attempt_db) {
+      throw new AppError(BAD_REQUEST, 'exam_attempt_not_found');
+    }
+
+    this.checkExamNotClosed(exam_attempt_db);
     exam_attempt_db.set({ finished_at });
     const exam_attempt = await this.gradingExam(exam_attempt_db, transaction);
     return {
       ...exam_attempt.dataValues,
-      exam: _.pick(exam_attempt.exam, ['title', 'note', 'id']),
+      exam: _.pick(exam_attempt.exam, ['title', 'note', 'id', 'creator_id']),
     };
   }
 
   async submitBySystem(exam_attempt_id: number) {
     const finished_at = new Date();
-    const exam_attempt = await this.findOrFail(exam_attempt_id, undefined);
-    this.checkExamNotClosed(exam_attempt);
-
+    // Need to load exam for gradingExam
+    const exam_attempt = await ExamAttempts.findOne({
+      where: {
+        id: exam_attempt_id,
+        deleted_at: null,
+      },
+      include: [
+        {
+          model: Exams,
+          as: 'exam',
+          attributes: [
+            'id',
+            'title',
+            'note',
+            'list_question',
+            'total_question',
+          ],
+          required: true,
+        },
+      ],
+    });
+    
+    if (!exam_attempt) {
+      throw new AppError(BAD_REQUEST, 'exam_attempt_not_found');
+    }
+    
+    // Only submit if not already submitted
+    if (exam_attempt.finished_at) {
+      return; // Already submitted, skip
+    }
+    
+    // Don't check exam closure for system auto-submit (time expired)
+    // This is called by scheduled job when time runs out
     exam_attempt.set({ finished_at });
     await this.gradingExam(exam_attempt);
   }
 
   // validate
   private checkExamNotClosed(exam_attempt: ExamAttempts) {
-    const now = new Date();
-    const expireTime = new Date(exam_attempt.started_at);
-    expireTime.setMinutes(expireTime.getMinutes() + exam_attempt.duration + 1);
-
-    if (exam_attempt.finished_at || now > expireTime) {
-      throw new AppError(BAD_REQUEST, 'exam_submission_closed');
+    // If already finished, cannot save/submit
+    if (exam_attempt.finished_at) {
+      throw new AppError(
+        BAD_REQUEST, 
+        'Bài thi đã được nộp. Không thể chỉnh sửa hoặc nộp lại.',
+        'exam_submission_closed'
+      );
     }
   }
 
   // helper
   private buildQuery(filter: IFilterExamAttempt) {
-    const query: any = {};
+    const query: any = {
+      deleted_at: null, // Only get non-deleted attempts
+    };
     if (filter.is_finished) {
       query.finished_at = { [Op.ne]: null };
     }
@@ -331,16 +461,25 @@ export class ExamAttemptService {
       })),
     }));
 
+    // Calculate total score of the exam (sum of all question scores)
+    const total_score = list_question.reduce((sum, q) => sum + (q.score || 0), 0);
+
     return {
       ..._.pick(exam_attempt, [
         'id',
         'exam_id',
         'user_id',
         'started_at',
+        'finished_at',
         'duration',
+        'total_question',
+        'correct_question',
+        'wrong_question',
+        'score',
       ]),
-      exam: _.pick(exam_attempt.exam, ['title', 'note', 'id']),
+      exam: _.pick(exam_attempt.exam, ['title', 'note', 'id', 'creator_id', 'lastest_start_time']),
       list_question,
+      total_score, // Add total score of the exam
     };
   }
 
@@ -360,11 +499,35 @@ export class ExamAttemptService {
       ) {
         throw new AppError(BAD_REQUEST, 'overdue_doing_exam');
       }
+      
+      // Check if there's an ongoing exam first (should be handled by controller, but double check)
+      const ongoingExam = await this.getOnGoingExam(data, user_id);
+      if (ongoingExam) {
+        // This should not happen as controller handles it, but just in case
+        throw new AppError(BAD_REQUEST, 'exam_already_started');
+      }
+      
+      // Count all finished attempts in DB (including soft deleted ones)
+      // Soft delete chỉ ẩn khỏi lịch sử, nhưng vẫn tính vào số lượt làm bài
       const count_exampt_attempt = await ExamAttempts.count({
-        where: { exam_id: data.exam_id, user_id: user_id },
+        where: { 
+          exam_id: data.exam_id, 
+          user_id: user_id,
+          finished_at: { [Op.ne]: null }, // Only count finished attempts
+          // Don't filter deleted_at - count all attempts in DB
+        },
       });
+      
       if (exam.max_attempt && count_exampt_attempt >= exam.max_attempt) {
-        throw new AppError(BAD_REQUEST, 'no_more_turns');
+        throw new AppError(
+          BAD_REQUEST, 
+          `Bạn đã làm bài ${count_exampt_attempt}/${exam.max_attempt} lần. Không thể làm thêm lần nào nữa.`,
+          'no_more_turns',
+          {
+            current_attempts: count_exampt_attempt,
+            max_attempts: exam.max_attempt
+          }
+        );
       }
     }
 
@@ -486,5 +649,26 @@ export class ExamAttemptService {
     });
     await exam_attempt.save({ transaction });
     return exam_attempt;
+  }
+
+  // delete (soft delete)
+  async destroy(id: number, user_id: number, transaction?: Transaction) {
+    const exam_attempt = await this.findOrFail(id, user_id, transaction);
+    
+    // Delete scheduled job if exists
+    if (exam_attempt.job_schedule_id) {
+      const scheduleService = ScheduleService.getInstance();
+      try {
+        await scheduleService.deleteJob(exam_attempt.job_schedule_id);
+      } catch (error) {
+        // Job might already be deleted, ignore error
+        console.warn('Failed to delete scheduled job:', error);
+      }
+    }
+    
+    // Soft delete: set deleted_at instead of destroying the record
+    exam_attempt.deleted_at = new Date();
+    await exam_attempt.save({ transaction });
+    return true;
   }
 }

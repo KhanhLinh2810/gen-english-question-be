@@ -27,9 +27,10 @@ export const saveAnswerExamAttemptSchema: JSONSchemaType<ISaveAnswerExamAttempt>
             },
             choice_id: {
               type: 'integer',
+              nullable: true,
             },
           },
-          required: ['question_id', 'choice_id'],
+          required: ['question_id'],
           additionalProperties: false,
         },
       },

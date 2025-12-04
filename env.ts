@@ -44,7 +44,7 @@ export default {
     acquire: Number(process.env.DB_POOL_ACQUIRE) || 60000,
     idle: Number(process.env.DB_POOL_IDLE) || 10000,
     logging: process.env.DB_LOGGING === 'true',
-    isSync: process.env.DB_SYNC === 'false',
+    isSync: process.env.DB_SYNC === 'true',
     retryMax: Number(process.env.DB_RETRY_MAX) || 5,
     retryDelay: Number(process.env.DB_RETRY_DELAY) || 5000,
   },
