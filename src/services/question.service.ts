@@ -51,6 +51,26 @@ export class QuestionService {
         return await this.createStressQuestion(data);
       case QuestionType.PRONUNCIATION:
         return await this.createPronunciationQuestion(data);
+      case QuestionType.SYNONYM:
+      // goi toi server kia
+      case QuestionType.ANTONYM:
+      // goi toi server kia
+      case QuestionType.FILL_IN_BLANK:
+      // goi toi server kia
+      case QuestionType.INCORRECT_WORD:
+      // goi toi server kia
+      case QuestionType.REARRANGE:
+      // goi toi server kia
+      case QuestionType.FACT:
+      // goi toi server kia
+      case QuestionType.MAIN_IDEA:
+      // goi toi server kia
+      case QuestionType.VOCAB:
+      // goi toi server kia
+      case QuestionType.INFERENCE:
+      // goi toi server kia
+      case QuestionType.PURPOSE:
+      // goi toi server kia
     }
   }
 
