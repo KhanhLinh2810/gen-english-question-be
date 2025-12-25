@@ -6,6 +6,7 @@ import { ExamService } from '../services';
 import { AppError } from '../utility/appError.util';
 import { resOK } from '../utility/HttpException';
 import { paginate, parseSafeDate } from '../utility/utils';
+import { ExamDTO } from '../dtos';
 
 export class ExamController {
   private readonly examService: ExamService;
@@ -25,8 +26,13 @@ export class ExamController {
       const filter: IFilterExam = req.query;
       if (filter.is_current_user_only) {
         filter.user_id = user.id;
+      } else {
+        // If not filtering by own exams, we need to show public exams OR user's own exams
+        // This will be handled in buildQuery by checking is_public and creator_id
+        // We'll pass user.id to the service so it can include user's own exams
+        filter.current_user_id = user.id;
       }
-      const data = await this.examService.getMany(filter, {
+      const data = await this.examService.getManyWithQuestions(filter, {
         limit,
         offset,
         order_by: sortBy,

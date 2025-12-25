@@ -41,12 +41,12 @@ export interface IUpdateQuestion {
 export interface ICreateChoice {
   content: string;
   is_correct: boolean;
-  explanation: string;
+  explanation?: string;
 }
 
 export interface IUpdateChoice {
   id?: number;
   content: string;
   is_correct: boolean;
-  explanation: string;
+  explanation?: string;
 }

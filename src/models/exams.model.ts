@@ -32,6 +32,7 @@ export class Exams extends Model<
   declare max_attempt?: number | null;
   declare note: string;
   declare list_question: IQuestionInExam[];
+  declare is_public?: boolean | null;
 
   declare created_at: CreationOptional<Date>;
   declare updated_at: CreationOptional<Date>;
@@ -66,6 +67,7 @@ export class Exams extends Model<
         duration: {
           type: DataTypes.INTEGER,
           allowNull: false,
+          defaultValue: 30, // Default 30 minutes
         },
         total_question: {
           type: DataTypes.INTEGER,
@@ -91,6 +93,11 @@ export class Exams extends Model<
           type: DataTypes.JSON,
           allowNull: false,
           defaultValue: [],
+        },
+        is_public: {
+          type: DataTypes.BOOLEAN,
+          allowNull: true,
+          defaultValue: true, // Default to public
         },
         created_at: {
           type: DataTypes.DATE,

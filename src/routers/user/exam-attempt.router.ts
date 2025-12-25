@@ -31,5 +31,6 @@ router.get(
   examAttemptController.detailExam.bind(examAttemptController),
 );
 router.get('/:id', examAttemptController.detail.bind(examAttemptController));
+router.delete('/:id', examAttemptController.destroy.bind(examAttemptController));
 
 export default router;

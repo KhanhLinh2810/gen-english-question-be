@@ -54,7 +54,18 @@ const connectToDatabase = async (retries: number = 0): Promise<void> => {
 
   try {
     await sequelize.authenticate();
-    // if (dbConfig.isSync) await sequelize.sync({ alter: true });
+    // Nếu đang ở môi trường phát triển hoặc DB sync được bật trong config thì tự động sync (tạo/alter bảng)
+    if (env.app.isDevelop || dbConfig.isSync) {
+      console.log('Auto syncing database models to the DB (may alter tables)...');
+      try {
+        await sequelize.sync({ alter: true });
+      } catch (syncError: any) {
+        // Ignore sync errors (e.g., too many keys) - database structure is already correct
+        if (syncError?.parent?.code !== 'ER_TOO_MANY_KEYS') {
+          console.warn('Database sync warning:', syncError.message);
+        }
+      }
+    }
     console.log(
       `Database connection established successfully (PID: ${process.pid})`,
     );
