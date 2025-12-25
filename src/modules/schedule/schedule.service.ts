@@ -7,15 +7,14 @@ export class ScheduleService {
   private static instance: ScheduleService;
   private queue: Queue;
   private readonly connection = {
-    host: env.redis.host,
-    port: env.redis.port,
+    url: env.redis.url,
+    tls: { rejectUnauthorized: false },
   };
 
   private constructor() {
     this.queue = new Queue('schedule-queue', {
       connection: this.connection,
     });
-
     new Worker(
       'schedule-queue',
       async (job: Job) => {
@@ -29,7 +28,6 @@ export class ScheduleService {
               console.error('have error when run submit exam', error);
             }
             break;
-
           default:
             break;
         }

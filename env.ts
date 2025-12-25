@@ -11,7 +11,7 @@ dotenv.config({
  * Environment variables
  */
 
-export default {
+const env = {
   app: {
     base_url: process.env.BASE_URL || 'http://localhost:3000',
     isProduction: process.env.NODE_ENV === 'production',
@@ -79,6 +79,9 @@ export default {
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT!) || 6379,
+    username: process.env.REDIS_USERNAME || '',
+    password: process.env.REDIS_PASSWORD || '',
+    url: '',
   },
   aws: {
     region: process.env.AWS_REGION || 'us-east-1',
@@ -98,3 +101,12 @@ export default {
     },
   },
 };
+
+const redis_url =
+  env.redis.password || process.env.REDIS_USERNAME
+    ? `redis://:${env.redis.password}@${env.redis.host}:${env.redis.port}`
+    : `redis://${env.redis.host}:${env.redis.port}`;
+
+env.redis.url = redis_url;
+
+export default env;

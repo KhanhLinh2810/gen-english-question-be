@@ -9,6 +9,7 @@
 	"scripts": {
 		"test": "jest --runInBand --detectOpenHandles",
 		"build": "rm -rf ./dist && tsc",
+		"build-windown": "rd /s /q dist && tsc",
 		"start": "node dist/index.js",
 		"migration:create": "sequelize-cli migration:generate --name",
 		"migration:run": "sequelize-cli db:migrate",

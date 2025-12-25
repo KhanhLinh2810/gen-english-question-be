@@ -10,7 +10,9 @@ export class CacheService {
     this.cache = createCache({
       stores: [
         new Keyv({
-          store: new KeyvRedis(`redis://${env.redis.host}:${env.redis.port}`),
+          store: new KeyvRedis(
+            `redis://:${env.redis.password}@${env.redis.host}:${env.redis.port}`,
+          ),
         }),
       ],
     });
