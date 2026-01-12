@@ -28,23 +28,16 @@ export class QuestionController {
       if (filter.is_current_user_only) {
         filter.user_id = user.id;
       }
-      const data = await this.questionService.getMany(filter, {
+      const data = await this.questionService.getManyWithStats(filter, {
         limit,
         offset,
         order_by: sortBy,
         sort: sortOrder,
       });
-
-      // const listQuestion = new ListQuestionResponse(
-      //   data.rows,
-      //   data.count,
-      //   page,
-      //   limit,
-      // );
-
+      const questionDtos = data.rows.map((q) => new QuestionDTO(q, user));
       return res
         .status(RESPONSE_SUCCESS)
-        .json(resOK(data, 'success', data.count, limit, page));
+        .json(resOK(questionDtos, 'success', data.count, limit, page));
     } catch (e) {
       next(e);
     }
@@ -53,12 +46,13 @@ export class QuestionController {
   async detail(req: Request, res: Response, next: NextFunction) {
     try {
       const questionId = _.toSafeInteger(req.params.id);
+      const user = (req as CustomRequest).user;
       const question = await this.questionService.findOrFailWithRelations(
         questionId,
       );
       return res
         .status(RESPONSE_SUCCESS)
-        .json(resOK(new QuestionDTO(question)));
+        .json(resOK(new QuestionDTO(question, user)));
     } catch (e) {
       next(e);
     }

@@ -16,6 +16,8 @@ export class QuestionDTO {
   public creator_id?: number;
   public creator?: Creator;
   public choices?: ChoiceDTO[];
+  public comment_count?: number;
+  public average_rating?: number | null;
 
   constructor(question: Questions, user?: UserDTO) {
     this.id = question.id;
@@ -44,22 +46,35 @@ export class QuestionDTO {
       };
     }
 
+    const isCreator = !!(
+      user &&
+      question.creator_id &&
+      user.id === question.creator_id
+    );
+
     this.choices = question.choices
-      ? question.choices.map((opt) => new ChoiceDTO(opt))
+      ? question.choices.map((opt) => new ChoiceDTO(opt, isCreator))
       : undefined;
+
+    // attach stats if present on model
+    const dv: any = (question as any).dataValues ?? question;
+    this.comment_count = dv.comment_count ?? 0;
+    this.average_rating = dv.average_rating ?? null;
   }
 }
 
 export class ChoiceDTO {
   public id: number;
   public content: string;
-  public is_correct: boolean;
+  public is_correct?: boolean;
   public explanation?: string;
 
-  constructor(choice: Choices) {
+  constructor(choice: Choices, includeMeta = false) {
     this.id = choice.id;
     this.content = choice.content;
-    this.is_correct = choice.is_correct;
-    this.explanation = choice.explanation;
+    if (includeMeta) {
+      this.is_correct = choice.is_correct;
+      this.explanation = choice.explanation;
+    }
   }
 }

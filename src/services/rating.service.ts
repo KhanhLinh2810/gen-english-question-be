@@ -23,6 +23,19 @@ export class RatingService {
 
   // create
   async create(data: CreationAttributes<Ratings>, transaction?: Transaction) {
+    // Avoid duplicate composite primary key (question_id, user_id).
+    // If a rating by the same user for the same question exists, update it instead of inserting.
+    const existing = await Ratings.findOne({
+      where: {
+        user_id: (data as any).user_id,
+        question_id: (data as any).question_id,
+      },
+      transaction,
+    });
+    if (existing) {
+      await existing.update(data, { transaction });
+      return existing;
+    }
     return await Ratings.create(data, { transaction });
   }
 
@@ -45,7 +58,11 @@ export class RatingService {
   }
 
   // find one by composite key
-  async findByCompositeKey(user_id: number, question_id: number, transaction?: Transaction) {
+  async findByCompositeKey(
+    user_id: number,
+    question_id: number,
+    transaction?: Transaction,
+  ) {
     return await Ratings.findOne({
       where: { user_id, question_id },
       transaction,
@@ -53,8 +70,16 @@ export class RatingService {
   }
 
   // find or fail
-  async findOrFail(user_id: number, question_id: number, transaction?: Transaction) {
-    const rating = await this.findByCompositeKey(user_id, question_id, transaction);
+  async findOrFail(
+    user_id: number,
+    question_id: number,
+    transaction?: Transaction,
+  ) {
+    const rating = await this.findByCompositeKey(
+      user_id,
+      question_id,
+      transaction,
+    );
     if (!rating) {
       throw new AppError(BAD_REQUEST, 'rating_not_found');
     }
@@ -74,7 +99,11 @@ export class RatingService {
   }
 
   // destroy
-  async destroy(user_id: number, question_id: number, transaction?: Transaction) {
+  async destroy(
+    user_id: number,
+    question_id: number,
+    transaction?: Transaction,
+  ) {
     const rating = await this.findOrFail(user_id, question_id, transaction);
     await rating.destroy({ transaction });
     return rating;

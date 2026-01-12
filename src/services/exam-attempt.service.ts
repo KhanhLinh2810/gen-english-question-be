@@ -52,7 +52,7 @@ export class ExamAttemptService {
       this.buildQueryUser(filter);
     const { query: query_for_exam, is_required: required_for_exam } =
       this.buildQueryExam(filter);
-    return await ExamAttempts.findAndCountAll({
+    const result = await ExamAttempts.findAndCountAll({
       where: this.buildQuery(filter),
       include: [
         {
@@ -65,7 +65,8 @@ export class ExamAttemptService {
         {
           model: Exams,
           as: 'exam',
-          attributes: ['id', 'title', 'duration'],
+          // include list_question so we can compute max score per exam
+          attributes: ['id', 'title', 'duration', 'list_question'],
           where: query_for_exam,
           required: required_for_exam,
         },
@@ -75,6 +76,26 @@ export class ExamAttemptService {
       order: [[paging.order_by, paging.sort]],
       distinct: true,
     });
+
+    // compute max score (sum of question scores) for each exam in rows
+    for (const row of result.rows) {
+      try {
+        const listQuestion = row.exam?.list_question ?? [];
+        const maxScore = Array.isArray(listQuestion)
+          ? listQuestion.reduce((s: number, q: any) => s + (q.score || 0), 0)
+          : 0;
+        // attach max_score inside exam object for consumer
+        if (row.exam) {
+          // mutate dataValues so JSON response includes it
+          if (!row.exam.dataValues) row.exam.dataValues = {} as any;
+          (row.exam.dataValues as any).max_score = maxScore;
+        }
+      } catch (err) {
+        // ignore per-row calculation errors to avoid failing the whole listing
+      }
+    }
+
+    return result;
   }
 
   // get one
@@ -128,11 +149,11 @@ export class ExamAttemptService {
         },
       ],
     });
-    
+
     if (!exam_attempt) {
       throw new AppError(BAD_REQUEST, 'exam_attempt_not_found');
     }
-    
+
     this.checkExamNotClosed(exam_attempt);
 
     return await this.buildExamDetail(exam_attempt, false);
@@ -162,11 +183,11 @@ export class ExamAttemptService {
         },
       ],
     });
-    
+
     if (!exam_attempt) {
       throw new AppError(BAD_REQUEST, 'exam_attempt_not_found');
     }
-    
+
     if (
       user_id !== exam_attempt.user_id &&
       user_id != exam_attempt.exam.creator_id
@@ -181,9 +202,9 @@ export class ExamAttemptService {
 
   async getOnGoingExam(data: ICreateExamAttempt, user_id: number) {
     const ongoingExam = await ExamAttempts.findOne({
-      where: { 
-        user_id, 
-        exam_id: data.exam_id, 
+      where: {
+        user_id,
+        exam_id: data.exam_id,
         finished_at: null,
         deleted_at: null, // Only find non-deleted attempts
       },
@@ -250,12 +271,7 @@ export class ExamAttemptService {
   ) {
     const finished_at = new Date();
     // save answer
-    await this.saveAnswer(
-      data,
-      exam_attempt_id,
-      user_id,
-      transaction,
-    );
+    await this.saveAnswer(data, exam_attempt_id, user_id, transaction);
 
     // Reload exam_attempt with exam for gradingExam
     const exam_attempt_db = await ExamAttempts.findOne({
@@ -318,16 +334,16 @@ export class ExamAttemptService {
         },
       ],
     });
-    
+
     if (!exam_attempt) {
       throw new AppError(BAD_REQUEST, 'exam_attempt_not_found');
     }
-    
+
     // Only submit if not already submitted
     if (exam_attempt.finished_at) {
       return; // Already submitted, skip
     }
-    
+
     // Don't check exam closure for system auto-submit (time expired)
     // This is called by scheduled job when time runs out
     exam_attempt.set({ finished_at });
@@ -339,9 +355,9 @@ export class ExamAttemptService {
     // If already finished, cannot save/submit
     if (exam_attempt.finished_at) {
       throw new AppError(
-        BAD_REQUEST, 
+        BAD_REQUEST,
         'Bài thi đã được nộp. Không thể chỉnh sửa hoặc nộp lại.',
-        'exam_submission_closed'
+        'exam_submission_closed',
       );
     }
   }
@@ -462,7 +478,10 @@ export class ExamAttemptService {
     }));
 
     // Calculate total score of the exam (sum of all question scores)
-    const total_score = list_question.reduce((sum, q) => sum + (q.score || 0), 0);
+    const total_score = list_question.reduce(
+      (sum, q) => sum + (q.score || 0),
+      0,
+    );
 
     return {
       ..._.pick(exam_attempt, [
@@ -477,7 +496,13 @@ export class ExamAttemptService {
         'wrong_question',
         'score',
       ]),
-      exam: _.pick(exam_attempt.exam, ['title', 'note', 'id', 'creator_id', 'lastest_start_time']),
+      exam: _.pick(exam_attempt.exam, [
+        'title',
+        'note',
+        'id',
+        'creator_id',
+        'lastest_start_time',
+      ]),
       list_question,
       total_score, // Add total score of the exam
     };
@@ -499,34 +524,34 @@ export class ExamAttemptService {
       ) {
         throw new AppError(BAD_REQUEST, 'overdue_doing_exam');
       }
-      
+
       // Check if there's an ongoing exam first (should be handled by controller, but double check)
       const ongoingExam = await this.getOnGoingExam(data, user_id);
       if (ongoingExam) {
         // This should not happen as controller handles it, but just in case
         throw new AppError(BAD_REQUEST, 'exam_already_started');
       }
-      
+
       // Count all finished attempts in DB (including soft deleted ones)
       // Soft delete chỉ ẩn khỏi lịch sử, nhưng vẫn tính vào số lượt làm bài
       const count_exampt_attempt = await ExamAttempts.count({
-        where: { 
-          exam_id: data.exam_id, 
+        where: {
+          exam_id: data.exam_id,
           user_id: user_id,
           finished_at: { [Op.ne]: null }, // Only count finished attempts
           // Don't filter deleted_at - count all attempts in DB
         },
       });
-      
+
       if (exam.max_attempt && count_exampt_attempt >= exam.max_attempt) {
         throw new AppError(
-          BAD_REQUEST, 
+          BAD_REQUEST,
           `Bạn đã làm bài ${count_exampt_attempt}/${exam.max_attempt} lần. Không thể làm thêm lần nào nữa.`,
           'no_more_turns',
           {
             current_attempts: count_exampt_attempt,
-            max_attempts: exam.max_attempt
-          }
+            max_attempts: exam.max_attempt,
+          },
         );
       }
     }
@@ -654,7 +679,7 @@ export class ExamAttemptService {
   // delete (soft delete)
   async destroy(id: number, user_id: number, transaction?: Transaction) {
     const exam_attempt = await this.findOrFail(id, user_id, transaction);
-    
+
     // Delete scheduled job if exists
     if (exam_attempt.job_schedule_id) {
       const scheduleService = ScheduleService.getInstance();
@@ -665,7 +690,7 @@ export class ExamAttemptService {
         console.warn('Failed to delete scheduled job:', error);
       }
     }
-    
+
     // Soft delete: set deleted_at instead of destroying the record
     exam_attempt.deleted_at = new Date();
     await exam_attempt.save({ transaction });

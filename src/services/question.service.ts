@@ -1,10 +1,12 @@
 import _ from 'lodash';
-import { CreationAttributes, Op, Transaction } from 'sequelize';
+import { CreationAttributes, Op, Transaction, fn, col } from 'sequelize';
 import { BAD_REQUEST } from '../constants/constants';
 import { ICreateQuestion, IFilterQuestion, IPagination } from '../interfaces';
 import { Choices } from '../models/choices.model';
 import { Questions } from '../models/questions.model';
 import { Users } from '../models/users.model';
+import { Comments } from '../models/comments.model';
+import { Ratings } from '../models/ratings.model';
 import { AppError } from '../utility/appError.util';
 
 export class QuestionService {
@@ -46,13 +48,76 @@ export class QuestionService {
           as: 'creator',
           attributes: ['id', 'username', 'avatar_url'],
         },
-        { model: Choices, as: 'choices', attributes: ['id', 'content', 'is_correct', 'explanation'] },
+        {
+          model: Choices,
+          as: 'choices',
+          attributes: ['id', 'content', 'is_correct', 'explanation'],
+        },
       ],
       limit: paging.limit,
       offset: paging.offset,
       order: [[paging.order_by, paging.sort]],
       distinct: true,
     });
+  }
+
+  // get many with comment count and average rating attached
+  async getManyWithStats(filter: IFilterQuestion, paging: IPagination) {
+    const where = this.buildQuery(filter);
+    const result = await Questions.findAndCountAll({
+      where,
+      include: [
+        {
+          model: Users,
+          as: 'creator',
+          attributes: ['id', 'username', 'avatar_url'],
+        },
+        {
+          model: Choices,
+          as: 'choices',
+          attributes: ['id', 'content', 'is_correct', 'explanation'],
+        },
+      ],
+      limit: paging.limit,
+      offset: paging.offset,
+      order: [[paging.order_by, paging.sort]],
+      distinct: true,
+    });
+
+    const ids = result.rows.map((r) => r.id);
+    if (ids.length === 0) return result;
+
+    // batch query comment counts
+    const commentRows: any[] = await Comments.findAll({
+      where: { question_id: { [Op.in]: ids } },
+      attributes: ['question_id', [fn('COUNT', col('id')), 'count']],
+      group: ['question_id'],
+      raw: true,
+    });
+
+    const ratingRows: any[] = await Ratings.findAll({
+      where: { question_id: { [Op.in]: ids } },
+      attributes: [
+        'question_id',
+        [fn('AVG', col('rating_value')), 'avg_rating'],
+      ],
+      group: ['question_id'],
+      raw: true,
+    });
+
+    const commentMap = new Map<number, number>();
+    for (const r of commentRows) commentMap.set(r.question_id, Number(r.count));
+    const ratingMap = new Map<number, number>();
+    for (const r of ratingRows)
+      ratingMap.set(r.question_id, Number(Number(r.avg_rating).toFixed(2)));
+
+    for (const q of result.rows) {
+      if (!q.dataValues) q.dataValues = {} as any;
+      (q.dataValues as any).comment_count = commentMap.get(q.id) ?? 0;
+      (q.dataValues as any).average_rating = ratingMap.get(q.id) ?? null;
+    }
+
+    return result;
   }
 
   // get one
@@ -90,6 +155,30 @@ export class QuestionService {
       if (!question.creator_id || question.creator_id !== creator_id) {
         throw new AppError(BAD_REQUEST, 'question_not_found');
       }
+    }
+
+    // attach comment count and average rating for this question
+    try {
+      const commentRow: any = await Comments.findOne({
+        where: { question_id: id },
+        attributes: [[fn('COUNT', col('id')), 'count']],
+        raw: true,
+      });
+      const ratingRow: any = await Ratings.findOne({
+        where: { question_id: id },
+        attributes: [[fn('AVG', col('rating_value')), 'avg_rating']],
+        raw: true,
+      });
+      if (!question.dataValues) question.dataValues = {} as any;
+      (question.dataValues as any).comment_count = commentRow
+        ? Number(commentRow.count)
+        : 0;
+      (question.dataValues as any).average_rating =
+        ratingRow && ratingRow.avg_rating !== null
+          ? Number(Number(ratingRow.avg_rating).toFixed(2))
+          : null;
+    } catch (err) {
+      // ignore stats errors
     }
     return question;
   }
@@ -203,43 +292,38 @@ export class QuestionService {
   // helper
   private buildQuery(filter: IFilterQuestion) {
     const query: any = {};
-    
+
     // Simple approach: if both content and tag exist and are the same, search both
     if (filter.content && filter.tag && filter.content === filter.tag) {
       query[Op.or] = [
         { content: { [Op.like]: `%${filter.content}%` } },
-        { 
-          tags: { 
-            [Op.and]: [
-              { [Op.ne]: null },
-              { [Op.like]: `%${filter.tag}%` }
-            ]
-          }
-        }
+        {
+          tags: {
+            [Op.and]: [{ [Op.ne]: null }, { [Op.like]: `%${filter.tag}%` }],
+          },
+        },
       ];
     } else {
       // Individual filters
       if (filter.content) {
         query.content = { [Op.like]: `%${filter.content}%` };
       }
-      if (filter.tag && !filter.content) { // Only apply tag filter if no content filter
-        query.tags = { 
-          [Op.and]: [
-            { [Op.ne]: null },
-            { [Op.like]: `%${filter.tag}%` }
-          ]
+      if (filter.tag && !filter.content) {
+        // Only apply tag filter if no content filter
+        query.tags = {
+          [Op.and]: [{ [Op.ne]: null }, { [Op.like]: `%${filter.tag}%` }],
         };
       }
     }
-    
+
     if (filter.user_id) {
       query.creator_id = filter.user_id;
     }
-    
+
     // Debug log
     console.log('buildQuery filter:', filter);
     console.log('buildQuery result:', JSON.stringify(query, null, 2));
-    
+
     return query;
   }
 
