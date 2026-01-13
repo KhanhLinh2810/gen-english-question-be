@@ -1,11 +1,18 @@
 import _ from 'lodash';
 import { CreationAttributes, Op, Transaction } from 'sequelize';
 import { BAD_REQUEST } from '../constants/constants';
-import { ICreateQuestion, IFilterQuestion, IPagination } from '../interfaces';
-import { Choices } from '../models/choices.model';
-import { Questions } from '../models/questions.model';
-import { Users } from '../models/users.model';
+import {
+  ICreateAutomaticQuestion,
+  ICreateQuestion,
+  IFilterQuestion,
+  IPagination,
+} from '../interfaces';
 import { AppError } from '../utility/appError.util';
+import axios from 'axios';
+import env from '../../env';
+import jwt, { SignOptions } from 'jsonwebtoken';
+import { QuestionType } from '../enums';
+import { Choices, Questions, Users } from '../models';
 
 export class QuestionService {
   private static instance: QuestionService;
@@ -35,6 +42,19 @@ export class QuestionService {
     });
   }
 
+  // create auto
+  async createAutomaticQuestion(data: ICreateAutomaticQuestion) {
+    const token = this.getToken();
+    const { processed_data, url } = this.processedCreatedAutomaticData(data);
+    const response = await axios.post(`${url}`, {
+      data: processed_data,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response;
+  }
+
   // get many
   async getMany(filter: IFilterQuestion, paging: IPagination) {
     const where = this.buildQuery(filter);
@@ -46,7 +66,11 @@ export class QuestionService {
           as: 'creator',
           attributes: ['id', 'username', 'avatar_url'],
         },
-        { model: Choices, as: 'choices', attributes: ['id', 'content', 'is_correct', 'explanation'] },
+        {
+          model: Choices,
+          as: 'choices',
+          attributes: ['id', 'content', 'is_correct', 'explanation'],
+        },
       ],
       limit: paging.limit,
       offset: paging.offset,
@@ -203,44 +227,98 @@ export class QuestionService {
   // helper
   private buildQuery(filter: IFilterQuestion) {
     const query: any = {};
-    
+
     // Simple approach: if both content and tag exist and are the same, search both
     if (filter.content && filter.tag && filter.content === filter.tag) {
       query[Op.or] = [
         { content: { [Op.like]: `%${filter.content}%` } },
-        { 
-          tags: { 
-            [Op.and]: [
-              { [Op.ne]: null },
-              { [Op.like]: `%${filter.tag}%` }
-            ]
-          }
-        }
+        {
+          tags: {
+            [Op.and]: [{ [Op.ne]: null }, { [Op.like]: `%${filter.tag}%` }],
+          },
+        },
       ];
     } else {
       // Individual filters
       if (filter.content) {
         query.content = { [Op.like]: `%${filter.content}%` };
       }
-      if (filter.tag && !filter.content) { // Only apply tag filter if no content filter
-        query.tags = { 
-          [Op.and]: [
-            { [Op.ne]: null },
-            { [Op.like]: `%${filter.tag}%` }
-          ]
+      if (filter.tag && !filter.content) {
+        // Only apply tag filter if no content filter
+        query.tags = {
+          [Op.and]: [{ [Op.ne]: null }, { [Op.like]: `%${filter.tag}%` }],
         };
       }
     }
-    
+
     if (filter.user_id) {
       query.creator_id = filter.user_id;
     }
-    
-    // Debug log
-    console.log('buildQuery filter:', filter);
-    console.log('buildQuery result:', JSON.stringify(query, null, 2));
-    
+
     return query;
+  }
+
+  private getToken(): string {
+    return jwt.sign(
+      {
+        id: env.aiServer.id,
+      },
+      env.aiServer.jwtSecret,
+      {
+        expiresIn: env.aiServer.jwtExpiredIn,
+      } as SignOptions,
+    );
+  }
+
+  private processedCreatedAutomaticData(data: ICreateAutomaticQuestion) {
+    let url = `${env.aiServer.baseUrl}/public`;
+    let processed_data = _.omit(data, ['num_question', 'num_ans_per_question']);
+    if (
+      !(
+        data.type in
+        [
+          QuestionType.PRONUNCIATION,
+          QuestionType.STRESS,
+          QuestionType.SYNONYM,
+          QuestionType.ANTONYM,
+          QuestionType.INCORRECT_WORD,
+          QuestionType.FILL_IN_BLANK,
+          QuestionType.REARRANGE,
+        ]
+      )
+    ) {
+      if (!data.description || data.description.length == 0) {
+        throw new AppError(BAD_REQUEST, 'description_is_required');
+      }
+      return {
+        processed_data: {
+          ...processed_data,
+          paragraph: data.description,
+        },
+        url: url + '/sentence',
+      };
+    }
+    if (!data.list_words || data.list_words.length == 0) {
+      return {
+        processed_data: {
+          ...processed_data,
+          list_words: [],
+        },
+        url,
+      };
+    }
+    const list_words = new Set();
+
+    data.list_words.map((word) => {
+      list_words.add(word);
+    });
+    return {
+      processed_data: {
+        ...processed_data,
+        list_words: Array(list_words),
+      },
+      url,
+    };
   }
 
   // other

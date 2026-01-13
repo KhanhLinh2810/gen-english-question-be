@@ -100,6 +100,12 @@ const env = {
       password: process.env.WORKMAIL_PASSWORD || '',
     },
   },
+  aiServer: {
+    id: process.env.AI_SERVER_ID || '1234567890',
+    baseUrl: process.env.AI_SERVER_BASE_URL || 'http://localhost:8000',
+    jwtSecret: process.env.AI_SERVER_JWT_SECRET || '123456',
+    jwtExpiredIn: process.env.AI_SERVER_JWT_EXPIRED_IN || '600s',
+  },
 };
 
 const redis_url =

@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv';
 import { QuestionType } from '../enums';
 import {
+  ICreateAutomaticQuestion,
   ICreateChoice,
   ICreateListQuestion,
   ICreateQuestion,
@@ -54,6 +55,31 @@ export const createListQuestionSchema: JSONSchemaType<ICreateListQuestion> = {
   required: ['questions'],
   additionalProperties: false,
 };
+
+export const createAutomaticQuestionSchema: JSONSchemaType<ICreateAutomaticQuestion> =
+  {
+    type: 'object',
+    properties: {
+      list_words: {
+        type: 'array',
+        items: {
+          type: 'string',
+        },
+        maxItems: 20,
+        default: [],
+        nullable: true,
+      },
+      description: {
+        type: 'string',
+        nullable: true,
+      },
+      num_question: { type: 'number', minimum: 1, maximum: 10 },
+      num_ans_per_question: { type: 'number', minimum: 2, maximum: 10 },
+      type: { type: 'number', enum: questionTypeValues },
+    },
+    required: ['num_question', 'num_ans_per_question', 'type'],
+    additionalProperties: false,
+  };
 
 // Update Question
 const updateChoiceSchema: JSONSchemaType<IUpdateChoice> = {

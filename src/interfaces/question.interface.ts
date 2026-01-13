@@ -50,3 +50,22 @@ export interface IUpdateChoice {
   is_correct: boolean;
   explanation?: string;
 }
+
+export interface ICreateAutomaticQuestion {
+  list_words?: string[];
+  description?: string;
+  num_question: number;
+  num_ans_per_question: number;
+  type: number;
+}
+
+export interface IResultAutomaticQuestion {
+  content: string;
+  type: string;
+  by_ai: boolean;
+  choices: ICreateChoice;
+}
+
+export interface IListResultAutomaticQuestion {
+  list_question: IResultAutomaticQuestion[];
+}

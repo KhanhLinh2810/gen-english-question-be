@@ -1,7 +1,7 @@
 // import { faker } from '@faker-js/faker';
 // import { CreationAttributes } from 'sequelize';
-// import { QuestionType } from 'src/enums';
-// import { Questions } from 'src/models';
+// import { QuestionType } from '../enums';
+// import { Questions } from '../models';
 
 // function fakeCreateQuestion(): CreationAttributes<Questions> {
 //   return {
