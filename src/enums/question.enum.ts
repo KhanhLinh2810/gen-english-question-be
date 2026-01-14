@@ -11,6 +11,7 @@ export enum QuestionType {
   VOCAB = 23,
   INFERENCE = 24,
   PURPOSE = 25,
+  ORTHER = 100,
 }
 
 export const QuestionTypeToText: Record<number, string> = {
