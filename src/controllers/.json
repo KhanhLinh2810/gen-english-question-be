@@ -1,0 +1,497 @@
+\documentclass[../DoAn.tex]{subfiles}
+\begin{document}
+\section{Khảo sát hiện trạng}
+\label{section:2.1}
+
+Trong những năm gần đây, cùng với sự phát triển của trí tuệ nhân tạo và công nghệ giáo dục (EdTech), nhiều nền tảng hỗ trợ giáo viên trong việc xây dựng và tổ chức hoạt động kiểm tra – đánh giá đã được triển khai và sử dụng rộng rãi. Đặc biệt, các công cụ hỗ trợ tạo câu hỏi trắc nghiệm và bài kiểm tra trực tuyến ngày càng trở nên phổ biến, góp phần giảm tải công việc thủ công cho giáo viên và tăng tính linh hoạt trong giảng dạy. Một số công cụ tiêu biểu có thể kể đến như Quizizz, QuestionWell và Conker, trong đó mỗi công cụ tiếp cận bài toán hỗ trợ giáo viên theo những hướng khác nhau.
+
+Quizizz là một nền tảng quen thuộc đối với giáo viên Việt Nam, chủ yếu được sử dụng để tổ chức các bài kiểm tra trắc nghiệm, trò chơi học tập và đánh giá nhanh trong lớp học. Điểm mạnh của Quizizz nằm ở giao diện trực quan, khả năng quản lý lớp học, theo dõi kết quả học tập và kho câu hỏi cộng đồng phong phú. Các đặc điểm này giúp giáo viên có thể tìm kiếm, sao chép và chỉnh sửa các câu hỏi sẵn có để phục vụ cho mục tiêu giảng dạy. Tuy nhiên, qua khảo sát thực tế cho thấy Quizizz chủ yếu đóng vai trò là nền tảng \emph{trình bày, tổ chức và phân phối} câu hỏi, trong khi quá trình xây dựng nội dung câu hỏi vẫn phụ thuộc gần như hoàn toàn vào giáo viên. Các chức năng hỗ trợ thông minh hiện tại chưa cho phép tự động sinh câu hỏi mới dựa trên mục tiêu đánh giá cụ thể, dạng bài mong muốn hoặc tập từ vựng do giáo viên chỉ định. Điều này khiến việc tạo mới hoặc mở rộng ngân hàng câu hỏi vẫn tiêu tốn nhiều thời gian và công sức, đặc biệt đối với các môn học yêu cầu số lượng lớn câu hỏi như tiếng Anh.
+
+QuestionWell là một công cụ ứng dụng trí tuệ nhân tạo nhằm hỗ trợ sinh câu hỏi từ văn bản đầu vào, cho phép giáo viên lựa chọn một số dạng câu hỏi và chủ đề tổng quát. Công cụ này giúp rút ngắn thời gian tạo câu hỏi ban đầu và phù hợp với các tình huống cần nhanh chóng xây dựng bài kiểm tra từ nội dung sẵn có. Tuy nhiên, kết quả khảo sát cho thấy QuestionWell chưa hỗ trợ cơ chế ràng buộc nội dung sinh câu hỏi theo danh sách từ vựng, mẫu câu hoặc cấu trúc ngữ pháp cụ thể mà giáo viên mong muốn. Các câu hỏi được sinh ra mang tính độc lập theo từng lần tạo, khó đảm bảo tính nhất quán khi sử dụng lâu dài. Bên cạnh đó, việc tái sử dụng hoặc chuẩn hóa các câu hỏi thành một ngân hàng câu hỏi có cấu trúc rõ ràng còn hạn chế, khiến giáo viên vẫn cần can thiệp chỉnh sửa thủ công để đáp ứng mục tiêu giảng dạy cụ thể.
+
+Conker cũng là một nền tảng cho phép sinh câu hỏi tự động và phân chia nội dung theo các chủ đề học tập. Công cụ này có ưu điểm về giao diện thân thiện và quy trình tạo câu hỏi đơn giản, phù hợp với người dùng không có nhiều kinh nghiệm công nghệ. Tuy nhiên, tương tự như QuestionWell, Conker chưa cung cấp khả năng kiểm soát chặt chẽ tập từ vựng hoặc mẫu câu được sử dụng trong quá trình sinh câu hỏi. Các câu hỏi được tạo ra chưa hỗ trợ hiệu quả việc lưu trữ và tái sử dụng để tạo ra một ngân hàng câu hỏi ổn định, có thể mở rộng và điều chỉnh theo nhu cầu giảng dạy trong thời gian dài.
+
+%  sửa bớt dài đi 
+
+Mặc dù các hệ thống đã hỗ trợ giáo viên ở một số khía cạnh nhất định, các nền tảng này vẫn còn hạn chế trong việc cho phép giáo viên chủ động kiểm soát nội dung sinh câu hỏi theo mục tiêu cụ thể, đặc biệt là khả năng cố định hoặc tái sử dụng tập từ vựng và dạng câu hỏi mong muốn. Điều này đặt ra nhu cầu về một hệ thống hỗ trợ sinh câu hỏi thông minh, vừa tận dụng được sức mạnh của trí tuệ nhân tạo, vừa cho phép giáo viên kiểm soát chặt chẽ nội dung đầu vào và xây dựng ngân hàng câu hỏi có tính nhất quán, phục vụ hiệu quả cho quá trình dạy và học tiếng Anh.
+
+% dựa trên các ý trên em bổ sung cho 
+
+% 
+
+\section{Tổng quan chức năng}
+\label{section:2.2}
+
+\subsection{Biểu đồ use case tổng quát}
+\label{subsection:2.2.1}
+
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Hinhve/usecase_tongquat.png}
+    \caption{Biểu đồ use case tổng quát}
+    \label{fig:usecase_tongquat}
+\end{figure}
+
+Hệ thống sinh câu hỏi trắc nghiệm tiếng Anh được thiết kế để hỗ trợ hai loại tác nhân chính: Khách và Người dùng. Khách là những cá nhân chưa đăng ký tài khoản hoặc chưa đăng nhập, chỉ có thể xem một số thông tin cơ bản của trang web. Người dùng là những người đã đăng ký tài khoản và đăng nhập vào hệ thống, có thể là học sinh hoặc giáo viên, những người dùng hệ thống hướng tới, có thể truy cập đầy đủ các chức năng của hệ thống. 
+
+Qua biểu đồ use case tổng quát trong hình \ref{fig:usecase_tongquat},  tác nhân khách có thể thực hiện một số chức năng cơ bản như đăng ký, đăng nhập, xem thông tin bài thi và sinh câu hỏi trắc nghiệm. Tác nhân người dùng có các chức năng như sinh câu hỏi trắc nghiệm, quản lý câu hỏi, quản lý đề thi, làm bài thi trực tuyến, theo dõi kết quả thi, quản lý thông tin cá nhân và đăng xuất.
+
+Trong số các chức năng nêu trên, nhóm chức năng được tập trung phát triển bao gồm sinh câu hỏi trắc nghiệm, quản lý câu hỏi, quản lý đề thi và làm bài thi trực tuyến. 
+
+\subsection{Biểu đồ use case phân rã "Sinh câu hỏi trắc nghiệm"}
+\label{subsection:2.2.2}
+
+
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Hinhve/usecase_sinhcauhoi.png}
+    \caption{Biểu đồ use case phân rã "Sinh câu hỏi trắc nghiệm"}
+    \label{fig:usecase_sinhcauhoi}
+\end{figure}
+
+
+\subsection{Biểu đồ use case phân rã "Quản lý câu hỏi"}
+\label{subsection:2.2.3}
+
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Hinhve/usecase_quanlycauhoi.png}
+    \caption{Biểu đồ use case Phân rã "Quản lý câu hỏi"}
+    \label{fig:usecase_quanlycauhoi}
+\end{figure}
+
+Use case "Quản lý câu hỏi" là chức năng cho phép người dùng thực hiện các thao tác liên quan tới việc xây dựng và duy trì ngân hàng câu hỏi, phục vụ cho quá trình tạo bài thi. Như hình \ref{fig:usecase_quanlycauhoi}, use case này có thể được phân rã thành các chức năng con, bao gồm: Lưu câu hỏi, Tìm kiếm câu hỏi, Sửa câu hỏi, Xóa câu hỏi.
+
+
+Cụ thể, use case Lưu câu hỏi cho phép người dùng lưu trữ câu hỏi  được tạo bằng AI hoặc thủ công. Use case Sửa câu hỏi cho phép cập nhật thông tin của các câu hỏi đã có trong ngân hàng, đảm bảo nội dung luôn chính xác và phù hợp. Use case Xóa câu hỏi hỗ trợ loại bỏ những câu hỏi trùng lặp, sai hoặc không còn sử dụng. Trong khi đó, use case Tìm kiếm câu hỏi giúp người dùng nhanh chóng tìm ra các câu hỏi dựa trên từ khóa, thông tin người dùng.
+
+\subsection{Biểu đồ use case phân rã "Quản lý đề thi"}
+\label{subsection:2.2.4}
+
+
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Hinhve/usecase_quanlydethi.png}
+    \caption{Biểu đồ use case phân rã "Quản lý đề thi"}
+    \label{fig:usecase_quanlydethi}
+\end{figure}
+
+Use case "Quản lý đề thi" cho phép người dùng thực hiện các hoạt động tạo lập, chỉnh sửa các đề thi phục vụ cho hoạt động kiểm tra, đánh giá người học. Các use case con được phân rã từ use case "Quản lý đề thi" bao gồm Tạo bài thi, Tìm kiếm bài thi, Sửa bài thi, Xóa bài thi.
+
+Tạo bài thi là chức năng người dùng sử dụng để tạo các đề mới từ các câu hỏi được lựa chọn từ ngân hàng câu hỏi của người dùng. Hỗ trợ cập nhật nội dung, thay đổi câu hỏi, cấu trúc đề thi là chức năng của use case Sửa bài thi. Chức năng Tìm kiếm bài thi giúp người dùng tìm được các bài thi phù hợp với nhu cầu của người dùng. Cuối cùng, chức năng Xóa bài thi được sử dụng để loại bỏ các bài thi không được sử dụng hoặc có sai sót trong quá trình tạo ra. 
+
+\subsection{Biểu đồ use case phân rã "Làm bài thi trực tuyến"}
+\label{subsection:2.2.5}
+
+
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Hinhve/usecase_lambaithi.png}
+    \caption{Biểu đồ use case phân rã "Làm bài thi trực tuyến"}
+    \label{fig:usecase_lambaithi}
+\end{figure}
+
+Use case "Làm bài thi trực tuyến" là một trong các chức năng quan trọng của hệ thống, giúp người dùng tham gia các bài thi một cách thuận tiện và nhanh chóng. Chức năng này cho phép người dùng truy cập vào danh sách các bài thi, lựa chọn bài thi mong muốn và thực hiện toàn bộ quá trình làm bài trực tiếp trên nền tảng.
+
+Use case này có thể được phân rã thành các use case con gồm: Chọn bài thi, Xem thông tin bài thi, Bắt đầu làm bài thi, Trả lời câu hỏi, và Nộp bài thi. Cụ thể, use case Chọn bài thi cho phép người dùng xem danh sách các bài thi đang mở và lựa chọn bài phù hợp với lịch thi của mình. Use case Xem thông tin bài thi hiển thị các thông tin chi tiết như tiêu đề bài thi, thời lượng, số lượng câu hỏi, và yêu cầu cụ thể. Khi người dùng quyết định bắt đầu, use case Bắt đầu làm bài thi được kích hoạt, hệ thống sẽ hiển thị câu hỏi đầu tiên và bộ đếm thời gian được khởi động. Trong quá trình làm bài, use case Trả lời câu hỏi cho phép người dùng nhập hoặc chọn đáp án cho từng câu hỏi, đồng thời có thể xem lại hoặc thay đổi câu trả lời trước khi nộp. Các đáp án sẽ được tự động lưu trong quá trình làm bài, đảm bảo đáp án của bài thi không bị mất trong các trường hợp gặp sự cố không mong muốn. Cuối cùng, use case Nộp bài thi cho phép người dùng xác nhận hoàn thành bài thi, hệ thống tiến hành chấm điểm, lưu kết quả và hiển thị thông báo hoàn tất bài thi.
+
+
+
+\subsection{Biểu đồ use case phân rã "Theo dõi kết quả thi"}
+\label{subsection:2.2.6}
+
+
+
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Hinhve/usecase_theodoiketquathi.png}
+    \caption{Biểu đồ use case phân rã "Theo dõi kết quả thi"}
+    \label{fig:usecase_theodoiketquathi}
+\end{figure}
+
+
+Use case “Theo dõi kết quả thi” cho phép người dùng quản lý, xem lại và đánh giá kết quả các bài thi đã được thực hiện trong hệ thống. Đây là chức năng quan trọng nhằm hỗ trợ việc đánh giá năng lực, theo dõi tiến độ học tập của người học, đồng thời giúp giảng viên tổng hợp và phân tích dữ liệu kết quả thi để phục vụ cho công tác giảng dạy và cải thiện đề thi.
+
+Use case này có thể được phân rã thành các use case con gồm: Xem danh sách kết quả thi, Xem thống kê tổng hợp. Trong đó, use case Xem danh sách kết quả thi cho phép người dùng xem toàn bộ kết quả của các bài thi mà mình đã tham gia, đồng thời giảng viên có thể xem kết quả của nhiều thí sinh trong cùng một bài thi để so sánh và đánh giá. Use case Xem thống kê tổng hợp cung cấp số liệu phân tích như điểm trung bình, tỷ lệ đạt, phân bố điểm hoặc biểu đồ thống kê giúp người dùng nắm bắt được hiệu suất làm bài và có thể xuất kết quả ra các định dạng như PDF để lưu trữ, in ấn hoặc phục vụ cho công tác báo cáo.
+
+
+
+\subsection{Biểu đồ use case phân rã "Quản lý thông tin cá nhân"}
+\label{subsection:2.2.7}
+
+
+
+
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Hinhve/usecase_quanlythongtincanhan.png}
+    \caption{Biểu đồ use case phân rã "Quản lý thông tin cá nhân"}
+    \label{fig:usecase_quanlythongtincanhan}
+\end{figure}
+
+Use case “Quản lý thông tin cá nhân” cho phép người dùng chủ động xem và chỉnh sửa các thông tin liên quan đến tài khoản của mình trong hệ thống. Use case này bao gồm các chức năng con như Xem thông tin cá nhân (hiển thị các thông tin hiện có của người dùng), Cập nhật mật khẩu (thay đổi mật khẩu đăng nhập để tăng cường bảo mật), Cập nhật avatar (thay đổi ảnh đại diện hiển thị trên hệ thống), Cập nhật thông tin cơ bản (chỉnh sửa các dữ liệu cá nhân như họ tên, email, số điện thoại,…), và Xóa tài khoản (thực hiện thao tác xóa vĩnh viễn tài khoản và dữ liệu liên quan khi người dùng không muốn tiếp tục sử dụng hệ thống).
+
+
+\subsection{Quy trình nghiệp vụ}
+\label{subsection:2.2.3}
+
+\subsubsection{Biểu đồ mô tả hoạt động "Tạo và lưu câu hỏi"}
+\label{subsubsection:a}
+
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=1\linewidth]{Hinhve/act_taovaluucauhoi.png}
+    \caption{Biểu đồ hoạt động "Tạo và lưu câu hỏi"}
+    \label{fig:act_taovaluucauhoi}
+\end{figure}
+
+Hình \ref{fig:act_taovaluucauhoi} là biểu đồ hoạt động "Tạo và lưu câu hỏi", sự kết hợp giữa hai use case "Sinh câu hỏi trắc nghiệm" và "Lưu câu hỏi". Biểu đồ mô tả sự tương tác giữa người dùng và hệ thống trong quá trình tạo mới và lưu trữ câu hỏi.
+
+Quy trình bắt đầu bằng việc người dùng chọn và nhập các thông tin cần thiết để hệ thống tiến hành sinh dữ liệu, bao gồm loại câu hỏi, số lượng câu hỏi, số lượng câu lựa chọn mỗi câu hỏi, danh sách từ vựng hoặc đoạn văn ngữ cảnh. Hệ thống sẽ dựa vào đầu vào người dùng cung cấp, tiến hành tạo ra các câu hỏi phù hợp vào yêu cầu và hiển thị ra màn hình người dùng. Người dùng cần đánh giá và chỉnh sửa nội dung của câu hỏi trước khi nhấn chọn "Lưu". Cuối cùng, hệ thống sẽ lưu câu hỏi vào cơ sở dữ liệu và thông báo kết quả thành công cho người dùng. 
+
+Quy trình này thể hiện sự kết hợp giữa tự động hóa của mô hình sinh câu hỏi và kiểm duyệt thủ công của người dùng, đảm bảo câu hỏi được tạo ra vừa nhanh chóng vừa đảm bảo chất lượng và tính phù hợp.
+
+
+
+\subsubsection{Biểu đồ mô tả hoạt động "Làm bài thi trực tuyến"}
+\label{subsubsection:b}
+
+
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=1\linewidth]{Hinhve/act_lambaithitructuyen.png}
+    \caption{Biểu đồ hoạt động "Làm bài thi trực tuyến"}
+    \label{fig:act_lambaithitructuyen}
+\end{figure}
+
+Hình \ref{fig:act_lambaithitructuyen} là biểu đồ hoạt động "Làm bài thi trực tuyến" mô tả sự tương tác giữa người dùng và hệ thống trong suốt quá trình làm bài thi, với sự kết hợp của các use case trong biểu đồ use case phân rã "Làm bài thi trực tuyến" mục \ref{subsection:2.2.5}.
+
+Về phía người dùng, quy trình bắt đầu khi họ chọn bài thi từ danh sách các bài được phép tham gia. Người dùng có thể xem thông tin chi tiết của bài thi như thời lượng, số lượng câu hỏi, hình thức thi và yêu cầu trước khi bắt đầu làm bài.
+
+Khi bài thi bắt đầu, hệ thống hiển thị câu hỏi và bộ đếm thời gian. Người dùng lần lượt trả lời từng câu hỏi, có thể chuyển qua lại giữa các câu hỏi, xem lại các câu đã trả lời trong suốt quá trình làm bài. Khi hoàn tất, người dùng nộp bài thi để hệ thống ghi nhận kết quả.
+
+Về phía hệ thống, sau khi người dùng bắt đầu làm bài, hệ thống tự động ghi nhận thời gian bắt đầu, theo dõi tiến trình làm bài, và lưu tạm thời các câu trả lời để tránh mất dữ liệu trong trường hợp gián đoạn. Khi người dùng nộp bài hoặc hết thời gian, hệ thống tự động chấm điểm, lưu kết quả vào cơ sở dữ liệu, và hiển thị kết quả của bài thi.
+
+Quy trình này đảm bảo tính liên tục, chính xác và công bằng trong quá trình thi trực tuyến, đồng thời cung cấp trải nghiệm thuận tiện và an toàn cho người dùng thông qua cơ chế tự động lưu và chấm điểm hiệu quả.
+
+
+\section{Đặc tả chức năng}
+\label{section:2.3}
+\subsection{Đặc tả use case "Đăng ký"}
+\hfill
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|>{\raggedright\arraybackslash}p{3.5cm}|p{11cm}|}
+\hline
+\textbf{Mã use case} & UC01 \\ \hline
+\textbf{Tên use case} & Đăng ký tài khoản \\ \hline
+\textbf{Mục đích sử dụng} & Tạo tài khoản mới cho người dùng \\ \hline
+\textbf{Tác nhân} & User \\ \hline
+\textbf{Sự kiện kích hoạt} & Sau khi người dùng ấn vào nút tạo tài khoản \\ \hline
+\textbf{Tiền điều kiện} & Người dùng chưa có tài khoản hoặc muốn tạo một tài khoản mới \\ \hline
+\textbf{Hậu điều kiện} & Thành công tạo tài khoản người dùng mới \\ \hline
+
+\textbf{Luồng sự kiện chính} &
+\parbox[t]{10cm}{
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{1cm}|p{3cm}|p{6cm}|} \hline
+% kể bảng sửa
+\textbf{STT} & \textbf{Thực hiện bởi} & \textbf{Hành động} \\ 
+1 & User & Truy cập vào hệ thống \\
+2 & Hệ thống & Hiển thị giao diện đăng nhập \\
+3 & User & Chọn chức năng tạo mới tài khoản \\
+4 & Hệ thống & Hiển thị mẫu đăng ký tài khoản \\
+5 & User & Nhập các thông tin cần thiết để tạo tài khoản \\
+6 & Hệ thống & Kiểm tra tính hợp lệ của các trường thông tin \\
+7 & Hệ thống & Thông báo tạo tài khoản thành công \\
+\end{tabular}
+}
+\\ \hline
+
+\textbf{Luồng sự kiện thay thế} &
+\parbox[t]{10cm}{
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{1cm}|p{3cm}|p{6cm}|} 
+\hline
+\textbf{STT} & \textbf{Thực hiện bởi} & \textbf{Hành động} \\
+6a & Hệ thống & Thông báo các trường bắt buộc chưa được nhập đủ \\
+6b & Hệ thống & Thông báo dữ liệu đầu vào không đúng định dạng dữ liệu \\
+\end{tabular}
+}
+\\ \hline
+\end{tabular}
+\caption{Đặc tả use case "Đăng ký"}
+\end{table}
+
+% \vspace{0.5cm}
+
+
+% \begin{table}[H]
+% \centering
+% \begin{tabular}{|c|p{3cm}|p{4cm}|p{2cm}|p{3cm}|}
+% \hline
+% \textbf{STT} & \textbf{Tên trường} & \textbf{Mô tả} & \textbf{Bắt buộc} & \textbf{Điều kiện hợp lệ}  \\ \hline
+% 1 & username & Tên đăng nhập & Có & Không chứa ký tự trắng\\ \hline
+% 2 & email & Email & Có & Định dạng ***@***\\ \hline
+% 3 & password & Mật khẩu người dùng & Có & Không chứa ký tự trắng \\ \hline
+% \end{tabular}
+% \caption{Bảng mô tả dữ liệu đầu vào của use case }
+% \end{table}
+
+
+\subsection{Đặc tả use case "Sinh câu hỏi trắc nghiệm"}
+\hfill
+
+
+\begin{table}[H] 
+\centering 
+\renewcommand{\arraystretch}{1.3} 
+\begin{tabular}{|>{\raggedright\arraybackslash}p{3.5cm}|p{11cm}|} \hline 
+\textbf{Mã use case} & UC02 \\ \hline 
+\textbf{Tên use case} & Sinh câu hỏi trắc nghiệm \\ \hline 
+\textbf{Mục đích sử dụng} & Tạo ra các câu hỏi trắc nghiệm tiếng Anh dựa trên yêu cầu đầu vào \\ \hline 
+\textbf{Tác nhân} & Người dùng \\ \hline 
+\textbf{Sự kiện kích hoạt} & Sau khi người dùng nhấn nút sinh câu hỏi  \\ \hline 
+\textbf{Tiền điều kiện} &  Không \\ \hline 
+\textbf{Hậu điều kiện} & Thành công tạo câu hỏi mới \\ \hline
+
+
+\textbf{Luồng sự kiện chính} &
+\parbox[t]{10cm}{
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{1cm}|p{3cm}|p{6cm}|} 
+\hline
+\textbf{STT} & \textbf{Thực hiện bởi} & \textbf{Hành động} \\ 
+1 & User & Truy cập vào hệ thống \\
+2 & Hệ thống & Hiển thị giao diện bảng điều khiển \\
+3 & User & Chọn chức năng tạo mới câu hỏi trắc nghiệm tiếng Anh \\
+4 & Hệ thống & Hiển thị mẫu dữ liệu để sinh câu hỏi \\
+5 & User & Nhập các thông tin cần thiết để sinh câu hỏi \\
+6 & Hệ thống & Kiểm tra tính hợp lệ của các trường thông tin \\
+7 & Hệ thống & Thông báo sinh câu hỏi thành công \\
+8 & Hệ thống & Hiển thị dữ liệu các câu hỏi được sinh \\
+\end{tabular}
+}
+\\ \hline
+
+\textbf{Luồng sự kiện thay thế} &
+\parbox[t]{10cm}{
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{1cm}|p{3cm}|p{6cm}|} 
+\hline
+\textbf{STT} & \textbf{Thực hiện bởi} & \textbf{Hành động} \\
+6a & Hệ thống & Thông báo các trường bắt buộc chưa được nhập đủ \\
+6b & Hệ thống & Thông báo dữ liệu đầu vào không đúng định dạng dữ liệu \\
+\end{tabular}
+}
+\\ \hline
+\end{tabular}
+\caption{Đặc tả use case "Sinh câu hỏi trắc nghiệm"}
+\end{table}
+
+
+% \begin{table}[H]
+% \centering
+% \begin{tabular}{|c|p{3cm}|p{4cm}|p{2cm}|p{3cm}|}
+% \hline
+% \textbf{STT} & \textbf{Tên trường} & \textbf{Mô tả} & \textbf{Bắt buộc} & \textbf{Điều kiện hợp lệ}  \\ \hline
+% 1 & num_question & Số lượng câu hỏi được sinh & Có & Số nguyên dương bé hơn hoặc bằng 10\\ \hline
+% 2 & num_ans_per_question & Số lượng lựa chọn mỗi câu hỏi & Có & Sô nguyên, lớn hơn hoặc bằng 2, nhỏ hơn hoặc bằng 10\\ \hline
+% 3 & type & Xác định loại câu hỏi (phiên âm, trọng âm, từ đồng nghĩa,...) & Có  & Số nguyên\\ \hline
+% 4 & list_words & Danh sách từ vựng & Có khi type   & Danh sách các chuỗi\\ \hline
+% \end{tabular}
+% \end{table}
+
+
+
+
+\subsection{Đặc tả use case "Tạo bài thi"}
+\hfill
+
+
+\begin{table}[H] 
+\centering 
+\renewcommand{\arraystretch}{1.3} 
+\begin{tabular}{|>{\raggedright\arraybackslash}p{3.5cm}|p{11cm}|} \hline 
+\textbf{Mã use case} & UC02 \\ \hline 
+\textbf{Tên use case} & "Tạo bài thi" \\ \hline 
+\textbf{Mục đích sử dụng} & Tạo ra bài thi phục vụ cho việc thực hành và kiểm tra của người dùng \\ \hline 
+\textbf{Tác nhân} & Người dùng \\ \hline 
+\textbf{Sự kiện kích hoạt} & Sau khi người dùng nhấn nút tạo bài thi  \\ \hline 
+\textbf{Tiền điều kiện} &  Người dùng đã đăng nhập và có đủ số lượng câu hỏi \\ \hline 
+\textbf{Hậu điều kiện} & Thành công tạo bài thi mới \\ \hline
+
+
+\textbf{Luồng sự kiện chính} &
+\parbox[t]{10cm}{
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{1cm}|p{3cm}|p{6cm}|} 
+\hline
+\textbf{STT} & \textbf{Thực hiện bởi} & \textbf{Hành động} \\ 
+1 & User & Truy cập vào hệ thống \\
+2 & Hệ thống & Hiển thị giao diện bảng điều khiển \\
+3 & User & Chọn chức năng tạo mới bài thi \\
+4 & Hệ thống & Hiển thị mẫu dữ liệu để tạo bài thi \\
+5 & User & Nhập các thông tin cần thiết để tạo bài thi \\
+6 & Hệ thống & Kiểm tra tính hợp lệ của các trường thông tin \\
+7 & Hệ thống & Thông báo tạo bài thi \\
+8 & Hệ thống & Hiển thị dữ liệu bài thi được tạo \\
+\end{tabular}
+}
+\\ \hline
+
+\textbf{Luồng sự kiện thay thế} &
+\parbox[t]{10cm}{
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{1cm}|p{3cm}|p{6cm}|} 
+\hline
+\textbf{STT} & \textbf{Thực hiện bởi} & \textbf{Hành động} \\
+6a & Hệ thống & Thông báo các trường bắt buộc chưa được nhập đủ \\
+6b & Hệ thống & Thông báo dữ liệu đầu vào không đúng định dạng dữ liệu \\
+\end{tabular}
+}
+\\ \hline
+\end{tabular}
+\caption{Đặc tả use case "Tạo bài thi"}
+\end{table}
+
+
+
+
+
+
+
+
+\subsection{Đặc tả use case "Bắt đầu làm bài thi"}
+\hfill
+
+
+\begin{table}[H] 
+\centering 
+\renewcommand{\arraystretch}{1.3} 
+\begin{tabular}{|>{\raggedright\arraybackslash}p{3.5cm}|p{11cm}|} \hline 
+\textbf{Mã use case} & UC02 \\ \hline 
+\textbf{Tên use case} & "Bắt đầu làm bài thi" \\ \hline 
+\textbf{Mục đích sử dụng} & Phục vụ quá trình làm bài thi \\ \hline 
+\textbf{Tác nhân} & Người dùng \\ \hline 
+\textbf{Sự kiện kích hoạt} & Sau khi người dùng nhấn nút bắt đầu làm bài thi  \\ \hline 
+\textbf{Tiền điều kiện} &  Người dùng đã đăng nhập \\ \hline 
+\textbf{Hậu điều kiện} & Bài thi bắt đầu, dữ liệu người dùng được ghi nhận, đồng hồ đếm ngược được hiển thị \\ \hline
+
+
+\textbf{Luồng sự kiện chính} &
+\parbox[t]{10cm}{
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{1cm}|p{3cm}|p{6cm}|} 
+\hline
+\textbf{STT} & \textbf{Thực hiện bởi} & \textbf{Hành động} \\ 
+1 & User & Chọn bài thi \\ \hline
+2 & Hệ thống & Hiển thị trang thông tin bài thi \\ \hline
+3 & User & Chọn bắt đầu làm bài thi \\ \hline
+4 & Hệ thống & Kiểm tra người dùng còn lượt thi và bài thi chưa có lượt thi đang thực hiện \\ \hline
+5 & Hệ thống & Khởi tạo dữ liệu lượt thi mới cho người dùng \\ \hline
+6 & Hệ thống & Thông báo bắt đầu làm bài thi thành công \\ \hline
+7 & Hệ thống & Hiển thị giao diện làm bài thi và đồng hồ đếm ngược \\ \hline
+\end{tabular}
+}
+\\ \hline
+
+\textbf{Luồng sự kiện thay thế} &
+\parbox[t]{10cm}{
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{1cm}|p{3cm}|p{6cm}|} 
+\hline
+\textbf{STT} & \textbf{Thực hiện bởi} & \textbf{Hành động} \\ \hline
+4a & Hệ thống & Người dùng còn lượt thi đang thực hiện, hiển thị thông báo và dữ liệu bài thi đang làm dở \\ \hline
+4b & Hệ thống & Người dùng đã hết lượt thi hoặc đã quá hạn làm bài, hiển thị thông báo không thể bắt đầu bài thi \\ \hline
+\end{tabular}
+}
+\\ \hline
+\end{tabular}
+\caption{Đặc tả use case "Bắt đầu làm bài thi"}
+\end{table}
+
+
+
+
+
+
+
+
+\subsection{Đặc tả use case "Xem danh sách kết quả thi"}
+\hfill
+
+\begin{table}[H] 
+\centering 
+\renewcommand{\arraystretch}{1.3} 
+\begin{tabular}{|>{\raggedright\arraybackslash}p{3.5cm}|p{11cm}|} \hline 
+\textbf{Mã use case} & UC02 \\ \hline 
+\textbf{Tên use case} & Xem danh sách kết quả thi \\ \hline 
+\textbf{Mục đích sử dụng} & Cho phép người dùng xem danh sách kết quả thi của các bài thi \\ \hline 
+\textbf{Tác nhân} & Người dùng \\ \hline 
+\textbf{Sự kiện kích hoạt} & Người dùng nhấn nút xem danh sách kết quả thi trên giao diện hệ thống. \\ \hline 
+\textbf{Tiền điều kiện} & Người dùng đã đăng nhập vào hệ thống\\ \hline 
+\textbf{Hậu điều kiện} & Người dùng có thể xem danh sách kết quả thi và chi tiết bài thi mà họ được phép truy cập. \\ \hline
+
+\textbf{Luồng sự kiện chính} &
+\parbox[t]{10cm}{
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{1cm}|p{3cm}|p{6cm}|} 
+\hline
+\textbf{STT} & \textbf{Thực hiện bởi} & \textbf{Hành động} \\ \hline
+1 & Người dùng & Chọn bài thi muốn xem kết quả từ danh sách bài thi. \\ \hline
+2 & Hệ thống & Hiển thị thông tin chi tiết bài thi\\ \hline 
+3 & Người dùng & Chọn chức năng xem danh sách kết quả thi \\ \hline
+4 & Hệ thống & Liệt kê danh sách kết quả thi \\ \hline
+5 & Người dùng & Chọn một kết quả để xem chi tiết bài thi\\ \hline
+6 & Hệ thống & Kiểm tra quyền truy cập của người dùng \\ \hline
+7 & Hệ thống & Hiển thị chi tiết kết quả bài thi \\ \hline
+\end{tabular}
+} 
+\\ \hline
+
+\textbf{Luồng sự kiện thay thế} &
+\parbox[t]{10cm}{
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{1cm}|p{3cm}|p{6cm}|} 
+\hline
+\textbf{STT} & \textbf{Thực hiện bởi} & \textbf{Hành động} \\
+6a & Hệ thống & Thông báo người dùng không thể xem chi tiết kết quả của người khác khi không phải người tổ chức bài thi. \\
+\end{tabular}
+}
+\\ \hline
+\end{tabular}
+\caption{Đặc tả use case "Xem danh sách kết quả thi"}
+\end{table}
+
+
+
+
+
+
+
+
+\section{Yêu cầu phi chức năng}
+\label{section:2.4}
+Yêu cầu phi chức năng (Non-Functional Requirements - NFR) là những yêu cầu không liên quan trực tiếp đến chức năng cụ thể của hệ thống phần mềm mà là các tiêu chí đánh giá chất lượng của hệ thống. Các yêu cầu này ảnh hưởng đến trải nghiệm người dùng và khả năng vận hành của hệ thống. Vì vậy, hệ thống sinh câu hỏi trắc nghiệm tiếng Anh cần đáp ứng một số các yêu cầu phi chức năng hiệu năng, bảo mật, khả năng sử dụng, khả năng bảo trì và độ tin cậy cao.
+
+Yêu cầu về hiệu suất xác định khả năng phản hồi và khả năng xử lý tải hiệu quả của hệ thống. Các yêu cầu này rất quan trọng để duy trì tốc độ và hiệu quả, đặc biệt là khi nhu cầu cao. Các chỉ số như thời gian phản hồi, thông lượng và mức sử dụng tài nguyên là các tiêu chí đo lường chính
+
+Yêu cầu bảo mật liên quan đến việc bảo vệ hệ thống khỏi truy cập trái phép và đảm bảo tính toàn vẹn của dữ liệu. Điều này bao gồm bảo vệ dữ liệu, mã hóa và xác thực. 
+
+Yêu cầu về khả năng sử dụng tập trung vào việc làm cho hệ thống đơn
+ giản, dễ sử dụng. Giao diện người dùng phải thân thiện, dễ thao tác và có tính trực quan cao để người dùng không cần kiến thức kỹ thuật vẫn có thể sử dụng hệ thống hiệu quả. Cấu trúc chức năng cần được sắp xếp hợp lý, hỗ trợ người dùng trong toàn bộ quy trình làm bài thi hoặc tạo câu hỏi.
+
+
+Hệ thống phải được thiết kế theo hướng mô-đun hóa, cho phép cập nhật, gỡ lỗi hoặc sửa đổi từng thành phần độc lập mà không ảnh hưởng đến toàn bộ hệ thống. Điều này giúp rút ngắn thời gian bảo trì, hỗ trợ mở rộng và thích ứng với thay đổi trong tương lai.
+
+Yêu cầu về độ tin cậy rất quan trọng để đảm bảo tính ổn định của hệ thống và giảm thiểu lỗi trong quá trình vận hành, nâng cao lòng tin của người dùng vào hệ thống.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Chương này đã thực hiện khảo sát và phân tích yêu cầu của hệ thống, xác định các tác nhân, use case, cùng với các luồng sự kiện chính và thay thế. Việc phân tích chi tiết này giúp nắm rõ các chức năng, ràng buộc và quyền truy cập của người dùng, từ đó tạo nền tảng cho việc thiết kế hệ thống chính xác và hiệu quả. Kết quả phân tích sẽ làm cơ sở cho việc xây dựng kiến trúc phần mềm, lựa chọn công nghệ, và triển khai các module một cách hợp lý trong các chương tiếp theo.
+
+\end{document}
