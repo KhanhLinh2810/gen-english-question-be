@@ -108,11 +108,11 @@ const env = {
   },
 };
 
-const redis_url =
-  env.redis.password || process.env.REDIS_USERNAME
-    ? `redis://:${env.redis.password}@${env.redis.host}:${env.redis.port}`
-    : `redis://${env.redis.host}:${env.redis.port}`;
+const redis_url = process.env.REDIS_URL
+  ? process.env.REDIS_URL
+  : env.redis.password || process.env.REDIS_USERNAME
+  ? `redis://:${env.redis.password}@${env.redis.host}:${env.redis.port}`
+  : `redis://${env.redis.host}:${env.redis.port}`;
 
 env.redis.url = redis_url;
-
 export default env;

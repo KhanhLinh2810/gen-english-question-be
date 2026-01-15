@@ -10,7 +10,7 @@ import {
   Users,
   UserSearchModel,
   Ratings,
-  Comments
+  Comments,
 } from '../models';
 
 const dbConfig = env.database;
@@ -56,9 +56,11 @@ const connectToDatabase = async (retries: number = 0): Promise<void> => {
     await sequelize.authenticate();
     // Nếu đang ở môi trường phát triển hoặc DB sync được bật trong config thì tự động sync (tạo/alter bảng)
     if (env.app.isDevelop || dbConfig.isSync) {
-      console.log('Auto syncing database models to the DB (may alter tables)...');
+      console.log(
+        'Auto syncing database models to the DB (may alter tables)...',
+      );
       try {
-        await sequelize.sync({ alter: true });
+        await sequelize.sync({ alter: false });
       } catch (syncError: any) {
         // Ignore sync errors (e.g., too many keys) - database structure is already correct
         if (syncError?.parent?.code !== 'ER_TOO_MANY_KEYS') {

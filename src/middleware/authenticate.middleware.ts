@@ -33,7 +33,7 @@ export const verifyToken = async (
     }
 
     const userService = UserService.getInstance();
-    const user = await userService.findOrFail(payload.id);
+    const user = await userService.findOrFailForAuthenticate(payload.id);
 
     (req as CustomRequest).user = new UserDTO(user.dataValues as Users);
     next();

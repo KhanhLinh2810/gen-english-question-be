@@ -167,8 +167,10 @@ export class ExamAttemptController {
 
       const exam_attempt_id = _.toSafeInteger(req.params.id);
       await this.examAttemptService.destroy(exam_attempt_id, user.id);
-      
-      return res.status(RESPONSE_SUCCESS).json(resOK(null, 'Xóa bài làm thành công'));
+
+      return res
+        .status(RESPONSE_SUCCESS)
+        .json(resOK(null, 'Xóa bài làm thành công'));
     } catch (e) {
       next(e);
     }

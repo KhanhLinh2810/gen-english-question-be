@@ -64,6 +64,14 @@ export class UserService {
     return user;
   }
 
+  async findOrFailForAuthenticate(userId: number, transaction?: Transaction) {
+    const user = await Users.findByPk(userId, { transaction });
+    if (!user) {
+      throw new AppError(BAD_REQUEST, 'unauthenticated');
+    }
+    return user;
+  }
+
   // update
   async updateUsernameAndEmail(
     data: IUpdateUser,

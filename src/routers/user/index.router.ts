@@ -16,7 +16,7 @@ router.use('/exam-attempts', examAttemptRouter);
 router.use('/questions', questionRouter);
 router.use('/comments', commentRouter);
 
-router.use('/ratings', ratingRouter)
+router.use('/ratings', ratingRouter);
 router.get('/me', userController.getMe.bind(userController));
 router.get('/list', userController.index.bind(userController));
 router.get('/:id', userController.detail.bind(userController));

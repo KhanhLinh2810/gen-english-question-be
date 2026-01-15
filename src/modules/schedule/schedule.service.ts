@@ -38,12 +38,18 @@ export class ScheduleService {
 
   static getInstance(): ScheduleService {
     if (!ScheduleService.instance) {
+      console.log(
+        '____________________________schedule_______________________',
+      );
       ScheduleService.instance = new ScheduleService();
     }
     return ScheduleService.instance;
   }
 
   async addJob(name: string, data: any = {}, options: JobsOptions = {}) {
+    console.log(
+      '____________________________add job schedule_______________________',
+    );
     return await this.queue.add(name, data, options);
   }
 
@@ -53,4 +59,6 @@ export class ScheduleService {
       await job.remove();
     }
   }
+
+  // schedule lên lịch check lại đáp án câu hỏi
 }
