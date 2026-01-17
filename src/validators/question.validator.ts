@@ -27,9 +27,9 @@ const createChoiceSchema: JSONSchemaType<ICreateChoice> = {
 export const createQuestionSchema: JSONSchemaType<ICreateQuestion> = {
   type: 'object',
   properties: {
-    content: { type: 'string', minLength: 1, maxLength: 512 },
+    content: { type: 'string', minLength: 1 },
     description: { type: 'string' },
-    score: { type: 'number', minimum: 0, maximum: 5 },
+    score: { type: 'number', minimum: 0, maximum: 10 },
     type: { type: 'number', enum: questionTypeValues },
     tags: { type: 'string', default: '[]' },
     by_ai: { type: 'boolean' },
@@ -98,7 +98,7 @@ export const updateQuestionSchema: JSONSchemaType<IUpdateQuestion> = {
   properties: {
     content: { type: 'string', minLength: 1 },
     description: { type: 'string' },
-    score: { type: 'number', minimum: 0, maximum: 5 },
+    score: { type: 'number', minimum: 0, maximum: 10 },
     type: { type: 'number', enum: questionTypeValues },
     tags: { type: 'string' },
     by_ai: { type: 'boolean' },

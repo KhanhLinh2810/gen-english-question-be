@@ -81,12 +81,12 @@ export class ExamController {
         req.body,
         user.id,
       );
-      await this.examService.create({
+      const exam = await this.examService.create({
         ...processCreateData,
         earliest_start_time: new Date(processCreateData.earliest_start_time),
         lastest_start_time: parseSafeDate(processCreateData.lastest_start_time),
       });
-      return res.status(RESPONSE_SUCCESS).json(resOK());
+      return res.status(RESPONSE_SUCCESS).json(resOK({ id: exam.id }));
     } catch (e) {
       next(e);
     }
