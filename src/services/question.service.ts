@@ -251,8 +251,12 @@ export class QuestionService {
       }
     }
 
-    if (filter.user_id) {
-      query.creator_id = filter.user_id;
+    if (filter.creator_id && filter.is_current_user_only) {
+      query.creator_id = filter.creator_id;
+    } else {
+      query.creator_id = {
+        [Op.or]: [filter.creator_id || null, null],
+      };
     }
 
     return query;

@@ -24,23 +24,16 @@ export class QuestionController {
       }
       const { page, limit, offset, sortBy, sortOrder } = paginate(req);
 
-      const filter: IFilterQuestion = req.query;
-      if (filter.is_current_user_only) {
-        filter.user_id = user.id;
-      }
+      const filter: IFilterQuestion = {
+        ...req.query,
+        creator_id: user.id,
+      };
       const data = await this.questionService.getMany(filter, {
         limit,
         offset,
         order_by: sortBy,
         sort: sortOrder,
       });
-
-      // const listQuestion = new ListQuestionResponse(
-      //   data.rows,
-      //   data.count,
-      //   page,
-      //   limit,
-      // );
 
       return res
         .status(RESPONSE_SUCCESS)
