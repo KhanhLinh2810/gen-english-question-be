@@ -12,6 +12,7 @@ import { Choices, ExamAttempts, Exams, Questions, Users } from '../models';
 import { AppError } from '../utility/appError.util';
 import { areArraysEqual, escapeForILike } from '../utility/utils';
 import { ScheduleService } from '../modules';
+import * as ExcelJS from 'exceljs';
 
 export class ExamAttemptService {
   private static instance: ExamAttemptService;
@@ -60,14 +61,14 @@ export class ExamAttemptService {
           as: 'user',
           attributes: ['id', 'username', 'avatar_url'],
           where: query_for_user,
-          required: required_for_user,
+          required: true,
         },
         {
           model: Exams,
           as: 'exam',
           attributes: ['id', 'title', 'duration'],
           where: query_for_exam,
-          required: required_for_exam,
+          required: true,
         },
       ],
       limit: paging.limit,
@@ -75,6 +76,103 @@ export class ExamAttemptService {
       order: [[paging.order_by, paging.sort]],
       distinct: true,
     });
+  }
+
+  async getAll(filter: IFilterExamAttempt, paging: IPagination) {
+    const { query: query_for_user, is_required: required_for_user } =
+      this.buildQueryUser(filter);
+    const { query: query_for_exam, is_required: required_for_exam } =
+      this.buildQueryExam(filter);
+    return await ExamAttempts.findAll({
+      where: this.buildQuery(filter),
+      include: [
+        {
+          model: Users,
+          as: 'user',
+          attributes: ['id', 'username', 'avatar_url'],
+          where: query_for_user,
+          required: true,
+        },
+        {
+          model: Exams,
+          as: 'exam',
+          attributes: ['id', 'title', 'duration'],
+          where: query_for_exam,
+          required: true,
+        },
+      ],
+      subQuery: true,
+      order: [[paging.order_by, paging.sort]],
+    });
+  }
+
+  async exportExamReport(
+    data: any[],
+    fileName: string = 'Bao-Cao-Ket-Qua.xlsx',
+  ): Promise<void> {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Kết quả làm bài');
+
+    worksheet.columns = [
+      { header: 'Tên bài thi', key: 'exam_title', width: 25 },
+      { header: 'Thí sinh', key: 'username', width: 20 },
+      { header: 'Bắt đầu', key: 'start', width: 20 },
+      { header: 'Kết thúc', key: 'end', width: 20 },
+      { header: 'Điểm số', key: 'score', width: 15 },
+      { header: 'Trạng thái', key: 'status', width: 15 },
+    ];
+
+    const formatDateTime = (dateStr: string) => {
+      const d = new Date(dateStr);
+      const time = d.toLocaleTimeString('vi-VN', { hour12: false });
+      const date = d.toLocaleDateString('vi-VN');
+      return `${time}\n${date}`;
+    };
+
+    data.forEach((item) => {
+      worksheet.addRow({
+        exam_title: item.exam.title,
+        username: item.user.username,
+        start: formatDateTime(item.started_at),
+        end: formatDateTime(item.finished_at),
+        score: `${item.score}/${item.total_question}`,
+        status: 'Hoàn thành',
+      });
+    });
+
+    // 4. Cấu hình định dạng (Styling)
+    // Định dạng Header
+    const headerRow = worksheet.getRow(1);
+    headerRow.height = 30;
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, size: 12 };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFF2F4F7' }, // Màu xám nhạt giống UI trong ảnh
+      };
+    });
+
+    // Căn giữa dữ liệu và cho phép xuống dòng ở cột thời gian
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber > 1) {
+        row.alignment = {
+          vertical: 'middle',
+          horizontal: 'center',
+          wrapText: true,
+        };
+        row.height = 40; // Tăng chiều cao để hiển thị đủ 2 dòng ngày/giờ
+      }
+    });
+
+    // 5. Lưu file
+    try {
+      await workbook.xlsx.writeFile(fileName);
+      console.log(`Đã xuất báo cáo: ${fileName}`);
+    } catch (error) {
+      console.error('Lỗi xuất file:', error);
+    }
   }
 
   // get one
@@ -355,7 +453,7 @@ export class ExamAttemptService {
   private buildQueryUser(filter: IFilterExamAttempt) {
     const query: any = {};
     let is_required = false;
-    if (filter.user_id) {
+    if (filter.is_current_user_only) {
       query.id = _.toSafeInteger(filter.user_id);
       is_required = true;
     }
@@ -367,7 +465,7 @@ export class ExamAttemptService {
   }
 
   private buildQueryExam(filter: IFilterExamAttempt) {
-    const query: any = {};
+    const query: any = { creator_id: filter.user_id };
     let is_required = false;
     if (filter.exam_id) {
       query.id = _.toSafeInteger(filter.exam_id);

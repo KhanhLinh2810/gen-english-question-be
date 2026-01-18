@@ -8,6 +8,7 @@ import { AppError } from '../utility/appError.util';
 import { resOK } from '../utility/HttpException';
 import { paginate } from '../utility/utils';
 import { ScheduleService } from '../modules';
+import * as ExcelJS from 'exceljs';
 
 export class ExamAttemptController {
   private readonly examAttemptService: ExamAttemptService;
@@ -24,10 +25,7 @@ export class ExamAttemptController {
       }
       const { page, limit, offset, sortBy, sortOrder } = paginate(req);
 
-      const filter: IFilterExamAttempt = req.query;
-      if (filter.is_current_user_only) {
-        filter.user_id = user.id;
-      }
+      const filter: IFilterExamAttempt = { ...req.query, user_id: user.id };
       const data = await this.examAttemptService.getMany(filter, {
         limit,
         offset,
@@ -38,6 +36,97 @@ export class ExamAttemptController {
       return res
         .status(RESPONSE_SUCCESS)
         .json(resOK(data.rows, 'success', data.count, limit, page));
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async exportExcel(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = (req as CustomRequest).user;
+      if (!user) {
+        throw new AppError(BAD_REQUEST, 'user_not_found');
+      }
+      const { page, limit, offset, sortBy, sortOrder } = paginate(req);
+
+      const filter: IFilterExamAttempt = { ...req.query, user_id: user.id };
+      const data = await this.examAttemptService.getAll(filter, {
+        limit,
+        offset,
+        order_by: sortBy,
+        sort: sortOrder,
+      });
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet(
+        `Thống_kê_điểm_${Date.now().toString()}`,
+      );
+
+      worksheet.columns = [
+        { header: 'Tên bài thi', key: 'exam_title', width: 25 },
+        { header: 'Thí sinh', key: 'username', width: 20 },
+        { header: 'Bắt đầu', key: 'start', width: 20 },
+        { header: 'Kết thúc', key: 'end', width: 20 },
+        { header: 'Điểm số', key: 'score', width: 15 },
+        { header: 'Trạng thái', key: 'status', width: 15 },
+      ];
+
+      const formatDateTime = (dateStr: Date) => {
+        const d = new Date(dateStr);
+        const time = d.toLocaleTimeString('vi-VN', { hour12: false });
+        const date = d.toLocaleDateString('vi-VN');
+        return `${time}\n${date}`;
+      };
+
+      data.forEach((item) => {
+        worksheet.addRow({
+          exam_title: item.exam.title,
+          username: item.user?.username || 'Người dùng ẩn danh',
+          start: formatDateTime(item.started_at),
+          end: item.finished_at ? formatDateTime(item.finished_at) : '-',
+          score:
+            item.finished_at && item.score != null
+              ? `${Number(item.score).toFixed(1)}${
+                  item.total_question
+                    ? `/${Number(item.total_question).toFixed(1)}`
+                    : ''
+                }`
+              : '-',
+          status: item.finished_at ? 'Hoàn thành' : 'Đang làm',
+        });
+      });
+
+      // 4. Cấu hình định dạng (Styling)
+      // Định dạng Header
+      const headerRow = worksheet.getRow(1);
+      headerRow.height = 30;
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true, size: 12 };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        // cell.fill = {
+        //   type: 'pattern',
+        //   pattern: 'solid',
+        //   fgColor: { argb: 'FFF2F4F7' },
+        // };
+      });
+
+      // 2. Thiết lập Header HTTP
+      const fileName = `Bao-Cao-${req.params.examId}.xlsx`;
+
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${fileName}"`,
+      );
+
+      // 3. Ghi trực tiếp vào response stream
+      await workbook.xlsx.write(res);
+
+      // Kết thúc response
+      res.status(200).end();
     } catch (e) {
       next(e);
     }

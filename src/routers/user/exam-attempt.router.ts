@@ -27,10 +27,17 @@ router.post(
 
 router.get('/', examAttemptController.index.bind(examAttemptController));
 router.get(
+  '/excel',
+  examAttemptController.exportExcel.bind(examAttemptController),
+);
+router.get(
   '/:id/exams',
   examAttemptController.detailExam.bind(examAttemptController),
 );
 router.get('/:id', examAttemptController.detail.bind(examAttemptController));
-router.delete('/:id', examAttemptController.destroy.bind(examAttemptController));
+router.delete(
+  '/:id',
+  examAttemptController.destroy.bind(examAttemptController),
+);
 
 export default router;

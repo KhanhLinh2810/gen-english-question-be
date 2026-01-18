@@ -20,6 +20,6 @@ export interface IFilterExamAttempt {
   is_current_user_only?: boolean;
   exam_id?: number;
   title?: string;
-  user_id?: number;
+  user_id: number;
   username?: string;
 }
