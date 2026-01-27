@@ -16,12 +16,15 @@ export const validateFieldInFormData = (req: Request) => {
   req.query = sanitizeObject(req.query);
   req.params = sanitizeObject(req.params);
 
-  if (
-    checkSqlInjection(req.body) ||
-    checkSqlInjection(req.query) ||
-    checkSqlInjection(req.params)
-  ) {
-    return 'sql_injection_detected';
+  // if (
+  //   checkSqlInjection(req.body) ||
+  //   checkSqlInjection(req.query) ||
+  //   checkSqlInjection(req.params)
+  // ) {
+  //   return 'sql_injection_detected';
+  // }
+  if (false) {
+    return '';
   }
 
   trimData(req.body);

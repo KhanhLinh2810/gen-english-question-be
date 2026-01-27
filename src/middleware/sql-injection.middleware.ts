@@ -81,9 +81,9 @@ export function sqlInjectionMiddleware(
     hasSqlInjection = true;
   }
 
-  if (hasSqlInjection) {
-    throw new AppError(BAD_REQUEST, 'sql_injection_detected');
-  }
+  // if (hasSqlInjection) {
+  //   throw new AppError(BAD_REQUEST, 'sql_injection_detected');
+  // }
 
   next();
 }

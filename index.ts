@@ -30,7 +30,8 @@ async function main() {
     await db.connectToDatabase();
     ExpressLoader(app);
     const port = env.app.port;
-    serverHttp.listen(port, () => {
+    const BACKLOG = 1024;
+    serverHttp.listen(port, BACKLOG, () => {
       console.log(`Server started on port ${port}`);
     });
   } catch (error) {

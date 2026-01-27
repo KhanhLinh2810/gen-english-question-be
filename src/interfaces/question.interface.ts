@@ -54,9 +54,11 @@ export interface IUpdateChoice {
 export interface ICreateAutomaticQuestion {
   list_words?: string[];
   description?: string;
-  num_question: number;
-  num_ans_per_question: number;
-  type: number;
+  questions: {
+    num_question: number;
+    num_ans_per_question: number;
+    type: number;
+  }[];
 }
 
 export interface IResultAutomaticQuestion {

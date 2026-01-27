@@ -44,15 +44,41 @@ export class QuestionService {
 
   // create auto
   async createAutomaticQuestion(data: ICreateAutomaticQuestion) {
+    console.log('--------------');
     const token = this.getToken();
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    };
     const { processed_data, url } = this.processedCreatedAutomaticData(data);
-    const response = await axios.post(`${url}`, {
-      data: processed_data,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    if (url.includes('/sentence')) {
+      const list_create_question = data.questions.map((q) => ({
+        type: q.type,
+        num_question: q.num_question,
+      }));
+
+      const payload = {
+        ...processed_data,
+        num_ans_per_question: data.questions[0].num_ans_per_question,
+        list_create_question,
+      };
+      console.log(payload);
+
+      const res = await axios.post(url, payload, { headers });
+      return res.data.data;
+    }
+    const requests = data.questions.map((q) => {
+      const payload = {
+        ...processed_data,
+        ...q,
+      };
+
+      return axios.post(url, payload, { headers });
     });
-    return response;
+
+    const responses = await Promise.all(requests);
+    return responses.flatMap((res) => {
+      return res.data.data;
+    });
   }
 
   // get many
@@ -275,11 +301,12 @@ export class QuestionService {
   }
 
   private processedCreatedAutomaticData(data: ICreateAutomaticQuestion) {
-    let url = `${env.aiServer.baseUrl}/public`;
-    let processed_data = _.omit(data, ['num_question', 'num_ans_per_question']);
+    let url = `${env.aiServer.baseUrl}/public/question`;
+    if (data.questions.length == 0)
+      throw new AppError(BAD_REQUEST, 'question_config_is_required');
     if (
       !(
-        data.type in
+        data.questions[0].type in
         [
           QuestionType.PRONUNCIATION,
           QuestionType.STRESS,
@@ -296,7 +323,6 @@ export class QuestionService {
       }
       return {
         processed_data: {
-          ...processed_data,
           paragraph: data.description,
         },
         url: url + '/sentence',
@@ -305,7 +331,6 @@ export class QuestionService {
     if (!data.list_words || data.list_words.length == 0) {
       return {
         processed_data: {
-          ...processed_data,
           list_words: [],
         },
         url,
@@ -318,7 +343,6 @@ export class QuestionService {
     });
     return {
       processed_data: {
-        ...processed_data,
         list_words: Array(list_words),
       },
       url,

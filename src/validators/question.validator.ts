@@ -73,11 +73,21 @@ export const createAutomaticQuestionSchema: JSONSchemaType<ICreateAutomaticQuest
         type: 'string',
         nullable: true,
       },
-      num_question: { type: 'number', minimum: 1, maximum: 10 },
-      num_ans_per_question: { type: 'number', minimum: 2, maximum: 10 },
-      type: { type: 'number', enum: questionTypeValues },
+      questions: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            num_question: { type: 'number', minimum: 1, maximum: 10 },
+            num_ans_per_question: { type: 'number', minimum: 2, maximum: 10 },
+            type: { type: 'number', enum: questionTypeValues },
+          },
+          required: ['num_question', 'num_ans_per_question', 'type'],
+        },
+        minItems: 1,
+      },
     },
-    required: ['num_question', 'num_ans_per_question', 'type'],
+    required: ['questions'],
     additionalProperties: false,
   };
 
