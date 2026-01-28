@@ -648,7 +648,13 @@ export class ExamAttemptService {
       ],
       attributes: ['content', 'description', 'score', 'id', 'type'],
     });
-
+    if (list_question_db.length == 0) {
+      throw new AppError(
+        BAD_REQUEST,
+        'Đề thi không hợp lệ do không có câu hỏi',
+        'no_question_in_exam',
+      );
+    }
     const list_question_in_exam = _.shuffle(exam.list_question);
     const list_answer: IAnswerInExamAttempt[] = [];
     const list_question = [];
@@ -659,7 +665,8 @@ export class ExamAttemptService {
         (question) => question.id === question_id,
       );
       if (!question_db) {
-        throw new AppError(BAD_REQUEST, 'exist_invalid_question');
+        // throw new AppError(BAD_REQUEST, 'exist_invalid_question');
+        continue;
       }
       list_answer.push({
         question_id,
