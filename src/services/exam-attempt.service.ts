@@ -572,6 +572,7 @@ export class ExamAttemptService {
         'correct_question',
         'wrong_question',
         'score',
+        'list_answer',
       ]),
       exam: _.pick(exam_attempt.exam, [
         'title',
